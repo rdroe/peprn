@@ -1,0 +1,16 @@
+v0.8
+.yarn
+node_modules/
+**/.DS_Store
+\#*
+**/\#
+.\#*
+*~
+.env
+yarn-error.log
+.yarnrc.yml
+*.tsbuildinfo
+**/*.js.map
+**/*.d.ts
+*.tgz
+.

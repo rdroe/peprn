@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+	"module": "CommonJS",
+	"esModuleInterop": true,
+	"moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+	"noImplicitAny": true,
+	"removeComments": true,
+	"preserveConstEnums": true,
+	"sourceMap": true,
+	"outDir": "./v0.8/dist/",
+	"declaration": true,
+	"allowJs": true,
+	"lib": ["dom", "es2019"],
+        "target": "esnext",
+        "skipLibCheck": true,
+        "composite": true,
+        "rootDir": "./src/",
+        "baseUrl": "./src/",
+    },
+    "include": [
+	"./src"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts",
+        "../server"
+    ]
+}
