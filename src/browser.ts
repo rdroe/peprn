@@ -3,7 +3,6 @@ import { makeRunner, CliApp, ZodStore, CallReturn } from './evaluator'
 
 export const apps: { [id: string]: CliApp } = {}
 
-
 type AppResolver = { resolver: null | Function, promise: null | Promise<any> }
 
 export const appResolvers: {
@@ -35,13 +34,16 @@ const genericDataHandler = (id: string, data: any, params: { time: number }) => 
 
 export const createApp = (id: string /*, taSelector: string, dataSelector: string*/) => {
     apps[id] = {
+        el: document.querySelector(`textarea`),
+        dataEl: document.querySelector('pre'),
         evaluator: makeRunner({ id }),
         zodStore: {},
         dataHandler: (input, data) => {
             genericDataHandler(id, data, { time: Date.now() })
         },
-        restarter: makeProm(id)
+        restarter: null
     }
+    apps[id].restarter = makeProm(id)
 }
 
 function makeProm(id: string) {
@@ -52,6 +54,8 @@ function makeProm(id: string) {
                 apps[id].el.value = ''
                 apps[id].evaluator(t, apps[id].dataHandler, makeFinalCallback(id, res))
 
+            } else {
+                console.log('asdf', apps[id].el.value)
             }
         }
     })
