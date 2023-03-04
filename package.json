@@ -16,8 +16,9 @@
   "scripts": {
     "mon": "tsc && yarn tsc -w"
   },
-  "exports": {
-    ".": "./dist/util/exports.js"
+    "exports": {
+      "." : "./dist/index.js",
+      "./util": "./dist/util/exports.js"
   },
   "main": "nyargs",
   "engines": {
