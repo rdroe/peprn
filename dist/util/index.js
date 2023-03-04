@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.isNode = void 0;
-const isNode = () => {
+export var isNode = function () {
     try {
-        const fn = new Function("try { return window.document === undefined } catch(e) { return true; }");
+        var fn = new Function("try { return window.document === undefined } catch(e) { return true; }");
         return fn();
     }
     catch (e) {
@@ -11,5 +8,4 @@ const isNode = () => {
         return false;
     }
 };
-exports.isNode = isNode;
 //# sourceMappingURL=index.js.map

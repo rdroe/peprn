@@ -5,6 +5,7 @@ require('esbuild').build({
     bundle: true,
     outfile: './public/js/main.js',
     sourcemap: false,
-    format: 'esm'
+    format: 'esm',
+    platform: 'neutral'
 }).catch(() => process.exit(1))
 
