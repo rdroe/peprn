@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+	"module": "CommonJS",
+	"esModuleInterop": true,
+	"moduleResolution": "node",
+	"noImplicitAny": true,
+	"removeComments": true,
+	"preserveConstEnums": true,
+	"sourceMap": true,
+	"declaration": true,
+	"allowJs": true,
+	"lib": ["dom", "es2019"],
+        "target": "es2015",
+        "skipLibCheck": true,
+        "noEmit": true
+    },
+    "watchOptions": {
+	"watchDirectory": "useFsEvents"
+    },
+    "exclude": ["./src/export", "./example"],
+    "references": 
+        [
+            { "path": "./tsconfig.server.json"},
+            { "path": "./tsconfig.browser.json"}
+        ]
+}

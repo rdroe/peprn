@@ -1,4 +1,4 @@
-import { Module } from '../utils/types'
+import { Module } from '../util/types'
 import scalar from './scalar'
 
 const cm: Module = {

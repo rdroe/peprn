@@ -1,5 +1,6 @@
 
-import { getMatchingModules, parse, yargsOptions } from './utils/cliParser'
+import { getMatchingModules, parse, yargsOptions } from './util/cliParser'
+import awaitAll from './util/awaitAll'
 import match from './match'
 
 type Opts = {
@@ -33,24 +34,27 @@ export const makeRunner = (opts: Opts) => {
         if (matched.length) {
 
             matched.reverse()
+            const modNames = [...parsed.moduleNames]
+            modNames.reverse()
+
             let n = 0
-            const successiveCalls: Promise<any>[] = []
+            const successiveCalls: { [modName: string]: Promise<unknown> } = {}
 
             do {
                 const o = n
-                successiveCalls.push(
+                const moduleName = modNames[o]
+                successiveCalls[moduleName] = (
                     (() => {
-
-                        console.log('fn--->', matched[o].fn)
-                        Promise.all(successiveCalls)
                         return matched[o].fn.call(null, parsed, successiveCalls)
                     })()
                 )
                 n += 1
             } while (!!matched[n])
 
-            dataCallback(null, await Promise.all(successiveCalls))
-            if (finalCallback) { finalCallback(null, await Promise.all(successiveCalls)) }
+            const allData = await awaitAll(successiveCalls)
+            dataCallback(null, allData)
+            if (finalCallback) { finalCallback(null, allData) }
+
         } else {
             finalCallback(null, null)
         }

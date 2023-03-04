@@ -1,12 +1,40 @@
 {
-    "name": "repl-experiment",
-    "dependencies": {
-        "@types/node": "^18.13.0",
-        "string-argv": "^0.3.1",
-        "zod": "^3.20.6"
-    },
-    "packageManager": "yarn@3.4.1",
-    "devDependencies": {
-        "typescript": "^4.9.5"
+  "author": "rdroe",
+  "license": "ISC",
+  "name": "repl-experiment",
+  "dependencies": {
+    "@types/node": "^18.13.0",
+    "string-argv": "^0.3.1",
+    "zod": "^3.20.6"
+  },
+  "packageManager": "yarn@3.2.4",
+  "devDependencies": {
+    "esbuild": "^0.17.11",
+    "http-server": "^14.1.1",
+    "typescript": "^4.9.5"
+  },
+  "scripts": {
+    "mon": "tsc && yarn tsc -w"
+  },
+  "exports": {
+    ".": "./dist/util/exports.js"
+  },
+  "main": "nyargs",
+  "engines": {
+    "yarn": ">=2.0.0",
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "v0.8"
+  ],
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist"
+      ],
+      "util": [
+        "dist/util/exports"
+      ]
     }
+  }
 }

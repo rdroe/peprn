@@ -42,6 +42,7 @@ export type ParsedCli = {
     'c:n': string[]
     'names': string[]
     temp?: any
+    moduleNames: string[]
     [optName: string]: ParsedArg
 
 }
@@ -58,6 +59,7 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
 
     const input: string[] = typeof rawIn === 'string' ? stringArgv(rawIn) : rawIn
     let currSubmodules = modules
+    let currModuleName = ''
     const ret: ParsedCli = input.reduce((accum: ParsedCli, curr) => {
 
         const isModuleName = getIsModuleName(currSubmodules)
@@ -68,9 +70,11 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
             if (temp.lastCommandReached) throw new Error(`Invariant violated; last command should be surpassed if module names are still being encountered.`)
             if (undefined === currSubmodules[curr]) throw new Error(`Invariant violated; as a module name "${curr}" should be a property name in the current submodules being analyzed.`)
             if (!temp.lastCommandReached) {
+                currModuleName = `${currModuleName} ${curr}`.trim()
                 currSubmodules = currSubmodules[curr].submodules
                 const und = accum['_'] ?? []
                 const uInGood = und.concat([curr])
+                accum.moduleNames.push(currModuleName)
                 return {
                     ...accum,
                     _: uInGood
@@ -204,6 +208,7 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
         'c:n': [],
         commands: [],
         names: [],
+        moduleNames: [],
         temp: {
             lastCommandReached: false,
             cursor: null as null | [string[], Opt]
