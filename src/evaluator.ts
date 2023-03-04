@@ -18,7 +18,7 @@ export type CliApp = {
     el?: HTMLTextAreaElement
     dataEl?: HTMLElement
     zodStore: ZodStore
-    restarter?: CallReturn
+    restarter?: Promise<void>
     dataHandler?: CallReturn
 }
 
@@ -43,15 +43,16 @@ export const makeRunner = (opts: Opts) => {
 
                         console.log('fn--->', matched[o].fn)
                         Promise.all(successiveCalls)
-                        return matched[o].fn.call(parsed, successiveCalls)
+                        return matched[o].fn.call(null, parsed, successiveCalls)
                     })()
                 )
-
+                n += 1
             } while (!!matched[n])
 
-            callback(null, await Promise.all(successiveCalls))
+            dataCallback(null, await Promise.all(successiveCalls))
+            if (finalCallback) { finalCallback(null, await Promise.all(successiveCalls)) }
         } else {
-            callback(null, null)
+            finalCallback(null, null)
         }
     }
 }

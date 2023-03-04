@@ -1,7 +1,6 @@
 import repl from 'node:repl'
-import { CallReturn, makeRunner, CliApp, ZodStore } from 'evaluator'
+import { CallReturn, makeRunner, CliApp, ZodStore } from './evaluator'
 const id = 'CLI'
-
 
 export const apps: { [id: string]: CliApp } = {}
 
@@ -25,4 +24,5 @@ export const createApp = (id: string /*, taSelector: string, dataSelector: strin
 
 }
 
+createApp(id)
 

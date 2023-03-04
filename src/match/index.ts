@@ -12,6 +12,7 @@ const cm: Module = {
     fn: async function match(_, y: {
         [childNamespace: string]: Promise<any>
     }) {
+        if (!y) return null
         const childResults = await Promise.all(Object.values(y))
         return childResults.flat().length
     },
