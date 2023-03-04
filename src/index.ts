@@ -1,35 +1,28 @@
 import repl from 'node:repl'
-import { getMatchingModules, parse, yargsOptions } from './utils/cliParser'
-import match from './match'
+import { CallReturn, makeRunner, CliApp, ZodStore } from 'evaluator'
+const id = 'CLI'
 
-repl.start({
-    prompt: '> ',
-    eval: async function(input, context, filename, callback) {
-        const parsed = parse({ match }, yargsOptions, input)
-        const matched = getMatchingModules({ match })(input)
-        // here, use the module-matching functions from the recent work on event-y things.
-        if (matched.length) {
 
-            matched.reverse()
-            let n = 0
-            const successiveCalls: Promise<any>[] = []
+export const apps: { [id: string]: CliApp } = {}
 
-            do {
-                const o = n
-                successiveCalls.push(
-                    (() => {
+const genericDataHandler = (zodStore: ZodStore, data: any, params: { time: number }) => {
+    zodStore[params.time] = data
+}
 
-                        console.log('fn--->', matched[o].fn)
-                        Promise.all(successiveCalls)
-                        return matched[o].fn.call(parsed, successiveCalls)
-                    })()
-                )
+export const createApp = (id: string /*, taSelector: string, dataSelector: string*/) => {
+    apps['CLI'] = { evaluator: makeRunner({ id }), zodStore: {} }
 
-            } while (!!matched[n])
-
-            callback(null, await Promise.all(successiveCalls))
-        } else {
-            callback(null, null)
-        }
+    const appDataHandler: CallReturn = (input, data) => {
+        genericDataHandler(apps['CLI'].zodStore, data, { time: Date.now() })
     }
-})
+
+    repl.start({
+        prompt: '> ',
+        eval: async (input, cyx, fn, cb) => {
+            apps['CLI'].evaluator(input, appDataHandler, cb)
+        }
+    })
+
+}
+
+
