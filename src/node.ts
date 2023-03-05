@@ -1,7 +1,6 @@
-import { CallReturn, makeRunner, CliApp, ZodStore } from './evaluator'
+import { CallReturn, makeRunner, CliApp, ZodStore, Opts } from './evaluator'
 import strlog from './util/strlog'
 import { isNode } from './util'
-const id = 'CLI'
 
 export const apps: { [id: string]: CliApp } = {}
 
@@ -10,25 +9,22 @@ const genericDataHandler = (zodStore: ZodStore, data: any, params: { time: numbe
     strlog(zodStore)
 }
 
-export const createApp = async (id: string /*, taSelector: string, dataSelector: string*/) => {
+export const createApp = async ({ id, modules }: Opts, runner?: ReturnType<typeof makeRunner>) => {
+
+    const appDataHandler: CallReturn = (error, data) => {
+        genericDataHandler(apps[id].zodStore, data, { time: Date.now() })
+    }
+
     if (isNode()) {
         const { default: repl } = await import('node:repl')
 
-        apps['CLI'] = { evaluator: makeRunner({ id }), zodStore: {} }
-
-        const appDataHandler: CallReturn = (input, data) => {
-            genericDataHandler(apps['CLI'].zodStore, data, { time: Date.now() })
-        }
+        apps[id] = { evaluator: runner ? runner : makeRunner({ id, modules }), zodStore: {} }
 
         repl.start({
             prompt: '> ',
-            eval: async (input, cyx, fn, cb) => {
-                apps['CLI'].evaluator(input, appDataHandler, cb)
+            eval: async (input, _, __, cb) => {
+                apps[id].evaluator(input, appDataHandler, cb)
             }
         })
     }
-
 }
-
-createApp(id)
-

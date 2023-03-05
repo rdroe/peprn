@@ -1,10 +1,12 @@
-
 import { getMatchingModules, parse, yargsOptions } from './util/cliParser'
 import awaitAll from './util/awaitAll'
 import match from './match'
+import { isNode } from './util'
+import { Modules } from './util/types'
 
-type Opts = {
+export type Opts = {
     id: string
+    modules?: Modules
 }
 
 export type ZodStore = {
@@ -25,11 +27,12 @@ export type CliApp = {
 
 export type CallReturn = (err: null | Error, success: any) => void
 
-export const makeRunner = (opts: Opts) => {
+export const makeRunner = (opts: Opts): (input: string, dataCallback: CallReturn, finalCallback: CallReturn) => Promise<void> => {
 
+    const { modules = { match } } = opts
     return async (input: string, dataCallback: CallReturn, finalCallback: CallReturn) => {
-        const parsed = parse({ match }, yargsOptions, input)
-        const matched = getMatchingModules({ match })(input)
+        const parsed = parse({ match, ...modules }, yargsOptions, input)
+        const matched = getMatchingModules({ match, ...modules })(input)
         // here, use the module-matching functions from the recent work on event-y things.
         if (matched.length) {
 

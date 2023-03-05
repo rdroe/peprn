@@ -5,7 +5,7 @@
   "dependencies": {
     "@types/node": "^18.13.0",
     "string-argv": "^0.3.1",
-    "zod": "^3.20.6"
+    "zod": "^3.21.0"
   },
   "packageManager": "yarn@3.2.4",
   "devDependencies": {
@@ -16,9 +16,9 @@
   "scripts": {
     "mon": "tsc && yarn tsc -w"
   },
-    "exports": {
-      "." : "./dist/index.js",
-      "./util": "./dist/util/exports.js"
+  "exports": {
+    ".": "./dist/index.js",
+    "./util": "./dist/util/exports.js"
   },
   "main": "nyargs",
   "engines": {

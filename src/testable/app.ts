@@ -1,3 +1,3 @@
 import { createBrowserApp } from '../'
 
-createBrowserApp('1')
+createBrowserApp({ id: '1' })

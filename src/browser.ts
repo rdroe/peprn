@@ -1,4 +1,5 @@
-import { makeRunner, CliApp } from './evaluator'
+
+import { makeRunner, CliApp, Opts } from './evaluator'
 
 export const apps: { [id: string]: CliApp } = {}
 type AppResolver = { resolver: null | Function, promise: null | Promise<any> }
@@ -22,12 +23,12 @@ const genericDataHandler = (id: string, data: any, params: { time: number }) => 
     dataEl.innerHTML = `${dataEl.innerHTML}\n${JSON.stringify(data, null, 2)}`
 }
 
-export const createApp = async (id: string /*, taSelector: string, dataSelector: string*/) => {
+export const createApp = async ({ id, modules }: Opts, runner?: ReturnType<typeof makeRunner>) => {
 
     apps[id] = {
         el: document.querySelector(`textarea`),
         dataEl: document.querySelector('pre'),
-        evaluator: makeRunner({ id }),
+        evaluator: runner ? runner : makeRunner({ id, modules }),
         zodStore: {},
         dataHandler: (input, data) => {
             genericDataHandler(id, data, { time: Date.now() })
