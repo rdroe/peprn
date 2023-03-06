@@ -24,7 +24,11 @@ export type CliApp = {
     zodStore: ZodStore
     restarter?: Promise<void>
     dataHandler?: CallReturn
+    history?: (input: string, key: KeyboardEvent, evalInteraction: EvalInteraction) => Promise<void>
+    historyData?: string[]
 }
+export type CliApps = { [id: string]: CliApp }
+export type EvalInteraction = 'called' | 'not-called'
 
 export type CallReturn = (err: null | Error, success: any) => void
 
