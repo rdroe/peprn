@@ -7,6 +7,7 @@ import { Modules } from './util/types'
 export type Opts = {
     id: string
     modules?: Modules
+    history?: CallReturn
 }
 
 export type ZodStore = {
