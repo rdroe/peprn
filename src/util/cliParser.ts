@@ -221,7 +221,7 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
 
 
 export const getMatchingModules = (moduleObj: Modules | null) => (str: string): Module[] => {
-    console.log('get matching module', moduleObj, str)
+
     if (!moduleObj) return
     const asArgs = stringArgv(str)
     let modulesAndSubmodules: Module[] = []

@@ -1,13 +1,13 @@
 import { getMatchingModules, parse, yargsOptions } from './util/cliParser'
 import awaitAll from './util/awaitAll'
 import match from './match'
-import { isNode } from './util'
 import { Modules } from './util/types'
 
 export type Opts = {
     id: string
     modules?: Modules
-    history?: CallReturn
+    history?: CliApp['history']
+
 }
 
 export type ZodStore = {
@@ -24,22 +24,24 @@ export type CliApp = {
     zodStore: ZodStore
     restarter?: Promise<void>
     dataHandler?: CallReturn
-    history?: (input: string, key: KeyboardEvent, evalInteraction: EvalInteraction) => Promise<void>
+    history?: (key: KeyboardEvent, evalInteraction: EvalInteraction) => Promise<void>
     historyData?: string[]
+    histCursor?: number
 }
 export type CliApps = { [id: string]: CliApp }
 export type EvalInteraction = 'called' | 'not-called'
 
 export type CallReturn = (err: null | Error, success: any) => void
 
-export const makeRunner = (opts: Opts): (input: string, dataCallback: CallReturn, finalCallback: CallReturn) => Promise<void> => {
+export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, dataCallback: CallReturn, finalCallback: CallReturn) => Promise<void> => {
 
-    const { modules = { match } } = opts
+    const { modules = { match }, id } = opts
     return async (input: string, dataCallback: CallReturn, finalCallback: CallReturn) => {
         const parsed = parse({ match, ...modules }, yargsOptions, input)
         const matched = getMatchingModules({ match, ...modules })(input)
         // here, use the module-matching functions from the recent work on event-y things.
         if (matched.length) {
+
 
             matched.reverse()
             const modNames = [...parsed.moduleNames]
@@ -53,7 +55,7 @@ export const makeRunner = (opts: Opts): (input: string, dataCallback: CallReturn
                 const moduleName = modNames[o]
                 successiveCalls[moduleName] = (
                     (() => {
-                        return matched[o].fn.call(null, parsed, successiveCalls)
+                        return matched[o].fn.call(null, parsed, successiveCalls, id, appsSingleton)
                     })()
                 )
                 n += 1

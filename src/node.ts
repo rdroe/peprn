@@ -18,7 +18,7 @@ export const createApp = async ({ id, modules }: Opts, runner?: ReturnType<typeo
     if (isNode()) {
         const { default: repl } = await import('node:repl')
 
-        apps[id] = { evaluator: runner ? runner : makeRunner({ id, modules }), zodStore: {} }
+        apps[id] = { evaluator: runner ? runner : makeRunner({ id, modules }, apps), zodStore: {} }
 
         repl.start({
             prompt: '> ',
