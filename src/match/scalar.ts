@@ -3,7 +3,6 @@ import { Module } from '../util/types'
 type Matchable = object | null | undefined | number | boolean | string
 type Matchables = Matchable[]
 
-
 const cm: Module = {
     help: {
         description: 'test whether the supplied scalar pairs are equal',

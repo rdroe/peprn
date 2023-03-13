@@ -12,10 +12,8 @@ require('esbuild').build({
 }).then((dat) => {
     console.log('dat', dat)
     if (dat.metafile) {
-        console.log('writing!!!', process.cwd())
         fs.writeFile('dist/metafile.json', JSON.stringify(dat.metafile), (err) => {
-
-            console.log('wrote')
+            console.log('wrote metafile')
             console.log('error', err?.message)
         });
     }
