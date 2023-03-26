@@ -2,18 +2,18 @@ import { getMatchingModules, parse, ParsedCli, yargsOptions } from './util/cliPa
 import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules } from './util/types'
+
 export type DataHandler = (inp: string, data: any, context: { args: ParsedCli, appId: string, apps: CliApps }) => Promise<void>
 
 export type Opts = {
     id: string
     modules?: Modules
     history?: CliApp['history']
-    preprocessInput?: (input: string) => string
+    preprocessInput?: (input: string, appId?: string, appsSingleton?: CliApps) => string
     dataHandler?: DataHandler
     init?: (ownId: string, apps: CliApps) => void
     userEffects?: DataHandler[]
 }
-
 
 export type ZodStore = {
     [id: string | number]: {
@@ -46,7 +46,7 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
 
     return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
 
-        const input = opts.preprocessInput ? opts.preprocessInput(inputRaw) : inputRaw
+        const input = opts.preprocessInput ? opts.preprocessInput(inputRaw, id, appsSingleton) : inputRaw
 
         const parsed = parse({ match, ...modules }, yargsOptions, input)
         const matched = getMatchingModules({ match, ...modules })(input)
@@ -76,7 +76,7 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                         const results = await matched[o].fn.call(null, parsed, successiveCalls, id, appsSingleton)
                         const singletonPackage = { appId: id, apps: appsSingleton, args: parsed }
                         const callbackResults = await dataCallback(moduleName, results, singletonPackage)
-                        await Promise.all(effects.map((fn1) => fn1(moduleName, results, singletonPackage)))
+                        await Promise.all(effects.map((fn1) => fn1(moduleName, id, singletonPackage)))
                         return callbackResults
                     })()
                 )
