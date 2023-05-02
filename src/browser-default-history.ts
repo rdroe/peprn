@@ -46,6 +46,7 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
         const storedHist = (await histDb.history.where('cliId').equals(id).toArray())
         const texts = storedHist.map(({ text }) => text) || []
         apps[id].historyData = texts
+
     }
 
     apps[id].histCursor = apps[id].historyData.length // cursor beyond end
@@ -53,11 +54,21 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
     return async (key: KeyboardEvent, evalResponse: EvalInteraction = 'not-called') => {
 
         if (evalResponse === 'called') {
+
             apps[id].histCursor = apps[id].historyData.length // cursor beyond end
-            if (apps[id].el.value && apps[id].el.value.trim().startsWith('history delete') === false) {
+            const val = apps[id].el.value.replace(/[\n\s]+$/g, '')
 
-                histDb.history.add({ cliId: id, text: apps[id].el.value.replace(/[\n\s]+$/g, ''), })
-
+            if (val && val.startsWith('history delete') === false) {
+                if (apps[id].historyData[apps[id].historyData.length - 1] !== val) {
+                    apps[id].historyData[
+                        apps[id].histCursor
+                    ] = val
+                    apps[id].histCursor = apps[id].historyData.length
+                    histDb.history.add({
+                        cliId: id,
+                        text: val,
+                    })
+                }
             }
 
         } else if (key.key === 'ArrowDown' && key.altKey) {
@@ -70,10 +81,6 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
                 apps[id].histCursor -= 1
                 apps[id].el.value = apps[id].historyData[apps[id].histCursor]
             }
-        } else {
-            apps[id].historyData[
-                apps[id].histCursor
-            ] = apps[id].el.value.replace(/[\n\s]+$/g, '')
         }
     }
 }

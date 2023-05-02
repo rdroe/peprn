@@ -39,6 +39,7 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
         restarter: null,
         userEffects: opts.userEffects ?? []
     }
+    console.log('apps', apps)
     apps[id].restarter = makeProm(id)
     apps[id].history = history ? history : await makeHistory(apps, id)
     if (opts.init) {
