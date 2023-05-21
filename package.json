@@ -21,7 +21,8 @@
   },
   "exports": {
     ".": "./dist/index.js",
-    "./util": "./dist/util/exports.js"
+    "./util": "./dist/util/exports.js",
+    "./browser": "./dist/browser.js"
   },
   "main": "nyargs",
   "engines": {
@@ -38,6 +39,9 @@
       ],
       "util": [
         "dist/util/exports"
+      ],
+      "browser": [
+        "dist/browser"
       ]
     }
   }

@@ -36,7 +36,7 @@ type ParsedArg = string | number | boolean | (string | number | boolean)[]
 
 export type ParsedCli = {
     '_': string[]
-    'positionalNonCommands': null | (string | number)[]
+    'positionalNonCommands': (string | number)[]
     'c:c': string[]
     'commands': string[]
     'c:n': string[]
@@ -203,7 +203,7 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
             }
         }
     }, {
-        positionalNonCommands: null as ParsedArg,
+        positionalNonCommands: [],
         'c:c': [],
         'c:n': [],
         commands: [],
