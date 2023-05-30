@@ -1,7 +1,7 @@
 {
   "author": "rdroe",
   "license": "MIT",
-  "name": "pepr",
+  "name": "peprn",
   "version": "0.1.0",
   "dependencies": {
     "@testing-library/react": "^14.0.0",
