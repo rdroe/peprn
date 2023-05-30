@@ -3,6 +3,7 @@
   "license": "MIT",
   "name": "direpl",
   "dependencies": {
+    "@testing-library/react": "^14.0.0",
     "dexie": "^3.2.3",
     "string-argv": "^0.3.1",
     "zod": "npm:3.21.4"
