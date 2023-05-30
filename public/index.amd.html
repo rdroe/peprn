@@ -1,0 +1,35 @@
+<!doctype html>
+  <html>
+    <head>
+      <style>
+        html {height: 100%; width: 100%; margin: 0; background-color: black; }
+        .center {
+            justify-content: center;
+            overflow-y: auto;
+            width: 100%;
+            margin: 0;
+        }
+        .white {
+            color: white;
+        }
+        .low {
+            max-height: 60px;
+        }
+      </style>
+    <head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>      
+      <script src="./repl-experiment.amd.js"></script>
+    </head>      
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+      <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body class="center">
+       <div class="white"><pre id="cli-out"></pre></div>
+        <textarea rows="5" cols="50" class="low" id="cli"></textarea>
+        <script>
+          require(["index"],  (args) => {
+              console.log('args', args)
+          })
+        </script>
+    </body>
+  </html>

@@ -1,8 +1,9 @@
 import { isNode } from 'util/index'
+import { createApp as createBrowserApp } from './browser'
 
 export { createApp as createServerApp } from './node'
-import { createApp as createBrowserApp } from './browser'
 export { createBrowserApp }
+
 export * from './evaluator'
 
 if (!isNode()) {
