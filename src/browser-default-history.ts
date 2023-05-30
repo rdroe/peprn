@@ -1,4 +1,4 @@
-import { CliApp, CliApps, EvalInteraction } from "evaluator"
+import { CliApp, CliApps, EvalInteraction } from "./evaluator"
 import Dexie, { Table } from 'dexie'
 import { Module } from "./util/types"
 

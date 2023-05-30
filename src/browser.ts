@@ -1,5 +1,5 @@
 import { makeHistory, history as historyCmd } from './browser-default-history'
-import { makeRunner, CliApp, Opts, EvalInteraction, CliApps, DataHandler } from './evaluator'
+import { makeRunner, CliApp, Opts, EvalInteraction, DataHandler } from './evaluator'
 
 
 export const apps: { [id: string]: CliApp } = {}
