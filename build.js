@@ -7,16 +7,15 @@ require('esbuild').build({
     sourcemap: false,
     format: 'esm',
     platform: 'neutral',
-    minify: true,
-    // metafile: true
+    minify: true
 }).then((dat) => {
-    console.log('dat', dat)
     if (dat.metafile) {
         fs.writeFile('dist/metafile.json', JSON.stringify(dat.metafile), (err) => {
-            console.log('wrote metafile')
+            console.log('wrote esbuild metafile')
             console.log('error', err?.message)
         });
     }
 
-}).catch(() => process.exit(1))
-
+}).catch((e) => {
+    process.exit(1);
+})
