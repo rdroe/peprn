@@ -1,4 +1,4 @@
-import { isNode } from 'util/index'
+import { isNode } from './util/index'
 
 export { createApp as createServerApp } from './node'
 import { createApp as createBrowserApp } from './browser'
