@@ -1,4 +1,4 @@
-import { makeHistory, history as historyCmd } from 'browser-default-history'
+import { makeHistory, history as historyCmd } from './browser-default-history'
 import { makeRunner, CliApp, Opts, EvalInteraction, CliApps, DataHandler } from './evaluator'
 
 
@@ -8,6 +8,7 @@ const makeFinalCallback = (id: string, res: Function) => async (err: null | Erro
     // @ts-ignore
     if (err) throw new Error(`Error intercepted; `, err)
     res()
+    console.log('setting app restart 1')
     apps[id].restarter = makeProm(id)
 }
 
@@ -18,7 +19,6 @@ const genericDataHandler: DataHandler = async (input, data: any, { args: ParsedC
     dataEl.innerHTML = `${dataEl.innerHTML}\n${JSON.stringify(data, null, 2)}`
     return data
 }
-
 
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
     const { id, modules, history } = opts
@@ -39,7 +39,7 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
         restarter: null,
         userEffects: opts.userEffects ?? []
     }
-    console.log('apps', apps)
+
     apps[id].restarter = makeProm(id)
     apps[id].history = history ? history : await makeHistory(apps, id)
     if (opts.init) {
