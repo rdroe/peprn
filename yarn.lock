@@ -200,10 +200,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^18.15.1":
-  version: 18.15.1
-  resolution: "@types/node@npm:18.15.1"
-  checksum: c63a40786919ef77c1dd26f60ffb1ed76c8b608fb156942e4d600d4536e06c19d09463a66cd76e6415f90cd281d7a1a4683e7cfd9a6f0927491853c56ffa17bf
+"@types/node@npm:^18.16.17":
+  version: 18.16.17
+  resolution: "@types/node@npm:18.16.17"
+  checksum: 2f7e3a552d525ef4b7a2620ef5ef59b3fdfb1d8ab20627b537e090732b35c2bd103944933d347a319cc7d478b3866b0d1bc3d629ee5899ca663a4547ca078cee
   languageName: node
   linkType: hard
 
@@ -1396,7 +1396,7 @@ __metadata:
   resolution: "repl-experiment@workspace:."
   dependencies:
     "@types/dexie": ^1.3.1
-    "@types/node": ^18.15.1
+    "@types/node": ^18.16.17
     dexie: ^3.2.3
     esbuild: ^0.17.11
     http-server: ^14.1.1

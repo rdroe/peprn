@@ -3,7 +3,7 @@
   "license": "ISC",
   "name": "repl-experiment",
   "dependencies": {
-    "@types/node": "^18.15.1",
+    "@types/node": "^18.16.17",
     "dexie": "^3.2.3",
     "string-argv": "^0.3.1",
     "zod": "npm:3.21.4"

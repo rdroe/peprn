@@ -8,6 +8,7 @@ const makeFinalCallback = (id: string, res: Function) => async (err: null | Erro
     // @ts-ignore
     if (err) throw new Error(`Error intercepted; `, err)
     res()
+    console.log('setting app restart 1')
     apps[id].restarter = makeProm(id)
 }
 
