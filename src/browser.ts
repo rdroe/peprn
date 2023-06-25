@@ -8,13 +8,13 @@ const makeFinalCallback = (id: string, res: Function) => async (err: null | Erro
     // @ts-ignore
     if (err) throw new Error(`Error intercepted; `, err)
     res()
-    console.log('setting app restart 1')
     apps[id].restarter = makeProm(id)
 }
 
 const genericDataHandler: DataHandler = async (input, data: any, { args: ParsedCli, appId: uniqueAppId, apps: CliApps }) => {
     const zodStore = apps[uniqueAppId].zodStore
     zodStore[Date.now()] = data
+    console.log('calling generic', zodStore)
     const dataEl = apps[uniqueAppId].dataEl as HTMLElement
     dataEl.innerHTML = `${dataEl.innerHTML}\n${JSON.stringify(data, null, 2)}`
     return data
