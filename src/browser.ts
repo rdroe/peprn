@@ -7,14 +7,14 @@ export const apps: { [id: string]: CliApp } = {}
 const makeFinalCallback = (id: string, res: Function) => async (err: null | Error, result: any) => {
     // @ts-ignore
     if (err) throw new Error(`Error intercepted; `, err)
-    res()
+    res(result)
     apps[id].restarter = makeProm(id)
 }
 
 const genericDataHandler: DataHandler = async (input, data: any, { args: ParsedCli, appId: uniqueAppId, apps: CliApps }) => {
     const zodStore = apps[uniqueAppId].zodStore
     zodStore[Date.now()] = data
-    console.log('calling generic', zodStore)
+
     const dataEl = apps[uniqueAppId].dataEl as HTMLElement
     dataEl.innerHTML = `${dataEl.innerHTML}\n${JSON.stringify(data, null, 2)}`
     return data
@@ -52,8 +52,8 @@ function makeProm(id: string) {
         apps[id].el.onkeyup = async (ev: KeyboardEvent) => {
             let evalInter: EvalInteraction = 'not-called'
             const t = apps[id].el.value
-            if (ev.key === 'Enter' && !ev.shiftKey) {
 
+            if (ev.key === 'Enter' && !ev.shiftKey) {
 
                 await apps[id].evaluator(t, apps[id].dataHandler, makeFinalCallback(id, res))
                 evalInter = 'called'
