@@ -22,7 +22,8 @@
   "exports": {
     ".": "./dist/index.js",
     "./util": "./dist/util/exports.js",
-    "./browser": "./dist/browser.js"
+    "./browser": "./dist/browser.js",
+    "./match": "./dist/match/index.js"
   },
   "main": "nyargs",
   "engines": {
@@ -30,7 +31,7 @@
     "node": ">=16.0.0"
   },
   "files": [
-    "v0.8"
+    "dist"
   ],
   "typesVersions": {
     "*": {
@@ -42,6 +43,9 @@
       ],
       "browser": [
         "dist/browser"
+      ],
+      "match": [
+        "dist/match/index.d.ts"
       ]
     }
   }

@@ -78,7 +78,7 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                         const callbackResults = await dataCallback(moduleName, results, singletonPackage)
 
                         await Promise.all(effects.map((fn1) => {
-                            console.log('calling a user effect', fn1.toString())
+
                             return fn1(moduleName, callbackResults, singletonPackage)
                         }
                         ))
