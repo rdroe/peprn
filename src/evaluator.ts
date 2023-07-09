@@ -76,7 +76,12 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                         const results = await matched[o].fn.call(null, parsed, successiveCalls, id, appsSingleton)
                         const singletonPackage = { appId: id, apps: appsSingleton, args: parsed }
                         const callbackResults = await dataCallback(moduleName, results, singletonPackage)
-                        await Promise.all(effects.map((fn1) => fn1(moduleName, id, singletonPackage)))
+
+                        await Promise.all(effects.map((fn1) => {
+
+                            return fn1(moduleName, callbackResults, singletonPackage)
+                        }
+                        ))
                         return callbackResults
                     })()
                 )

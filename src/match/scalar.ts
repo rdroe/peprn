@@ -12,7 +12,7 @@ const cm: Module = {
         }
     },
     validate: (arg): arg is { [idx: string]: any } => {
-        console.log('result:', arg)
+
         return true
     },
     fn: async function scalarMatch(argv) {

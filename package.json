@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "dependencies": {
     "@testing-library/react": "^14.0.0",
+    "@types/node": "^18.16.17",
     "dexie": "^3.2.3",
     "string-argv": "^0.3.1",
     "zod": "npm:3.21.4"
@@ -25,7 +26,8 @@
   "exports": {
     ".": "./dist/index.js",
     "./util": "./dist/util/exports.js",
-    "./browser": "./dist/browser.js"
+    "./browser": "./dist/browser.js",
+    "./match": "./dist/match/index.js"
   },
   "main": "nyargs",
   "engines": {
@@ -45,6 +47,9 @@
       ],
       "browser": [
         "dist/browser"
+      ],
+      "match": [
+        "dist/match/index.d.ts"
       ]
     }
   }
