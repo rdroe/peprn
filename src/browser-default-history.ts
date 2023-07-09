@@ -40,6 +40,15 @@ export const history: Module = {
     }
 }
 
+export const cleanHistory = (cli?: string) => cli?.replace(/[\n\s]+$/g, '') ?? ""
+const addHistory = async (id: string, val: string) => {
+    return histDb.history.add({
+        cliId: id,
+        text: cleanHistory(val),
+    })
+}
+
+export const earlySaveHistory = addHistory
 export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['history']> => {
 
     if (!apps[id].historyData) {
@@ -56,7 +65,7 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
         if (evalResponse === 'called') {
 
             apps[id].histCursor = apps[id].historyData.length // cursor beyond end
-            const val = apps[id].el.value.replace(/[\n\s]+$/g, '')
+            const val = cleanHistory(apps[id].el.value)
 
             if (val && val.startsWith('history delete') === false) {
                 if (apps[id].historyData[apps[id].historyData.length - 1] !== val) {
@@ -64,10 +73,8 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
                         apps[id].histCursor
                     ] = val
                     apps[id].histCursor = apps[id].historyData.length
-                    histDb.history.add({
-                        cliId: id,
-                        text: val,
-                    })
+
+                    addHistory(id, val)
                 }
             }
 

@@ -1,6 +1,7 @@
 import { makeHistory, history as historyCmd } from './browser-default-history'
 import { makeRunner, CliApp, Opts, EvalInteraction, CliApps, DataHandler } from './evaluator'
 
+export { earlySaveHistory, cleanHistory } from './browser-default-history'
 
 export const apps: { [id: string]: CliApp } = {}
 
@@ -54,7 +55,6 @@ function makeProm(id: string) {
             const t = apps[id].el.value
 
             if (ev.key === 'Enter' && !ev.shiftKey) {
-
                 await apps[id].evaluator(t, apps[id].dataHandler, makeFinalCallback(id, res))
                 evalInter = 'called'
             }
@@ -64,6 +64,7 @@ function makeProm(id: string) {
             }
 
             if (ev.key === 'Enter' && !ev.shiftKey) {
+
                 apps[id].el.value = ''
             }
         }
