@@ -13,6 +13,7 @@ const genericDataHandler: DataHandler = async (id: string, data: any, { args: Pa
 let nodeReplOpts: ReplOptions
 let nodeRepl: REPLServer
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
+
     const { id } = opts
     if (isNode()) {
         const { default: repl } = await new (Function(`import('node:repl')`)()) as {

@@ -1,28 +1,34 @@
 {
   "author": "rdroe",
-  "license": "ISC",
-  "name": "repl-experiment",
+  "license": "MIT",
+  "name": "peprn",
+  "version": "0.1.0",
   "dependencies": {
-    "@types/node": "^18.15.1",
+    "@testing-library/react": "^14.0.0",
+    "@types/node": "^18.16.17",
     "dexie": "^3.2.3",
     "string-argv": "^0.3.1",
     "zod": "npm:3.21.4"
   },
+
   "packageManager": "yarn@3.6.0",
   "devDependencies": {
     "@types/dexie": "^1.3.1",
+    "@types/node": "^18.15.1",
     "esbuild": "^0.17.11",
     "http-server": "^14.1.1",
     "nodemon": "npm:2.0.22",
     "typescript": "^4.9.5"
   },
   "scripts": {
-    "mon": "nodemon --exec \"yarn tsc && node build.js \" --watch src --ext .ts,.js,.html "
+    "mon": "nodemon --exec \"yarn build\" --watch src --ext .ts,.js,.html",
+    "build": "yarn tsc && node build.js"
   },
   "exports": {
     ".": "./dist/index.js",
     "./util": "./dist/util/exports.js",
-    "./browser": "./dist/browser.js"
+    "./browser": "./dist/browser.js",
+    "./match": "./dist/match/index.js"
   },
   "main": "nyargs",
   "engines": {
@@ -30,7 +36,7 @@
     "node": ">=16.0.0"
   },
   "files": [
-    "v0.8"
+    "dist"
   ],
   "typesVersions": {
     "*": {
@@ -42,6 +48,9 @@
       ],
       "browser": [
         "dist/browser"
+      ],
+      "match": [
+        "dist/match/index.d.ts"
       ]
     }
   }

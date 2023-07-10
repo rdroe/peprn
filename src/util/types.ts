@@ -1,4 +1,4 @@
-import { CliApps } from "evaluator"
+import { CliApps } from "../evaluator"
 import { ParsedCli } from "./cliParser"
 
 export interface Module {
