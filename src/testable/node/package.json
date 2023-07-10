@@ -1,0 +1,14 @@
+{
+  "name": "peprn-node",
+  "version": "0.0.1",
+  "description": "node-based peprn trial app",
+  "main": "index.js",
+  "author": "rdroe",
+  "license": "MIT",
+  "workspaces": [
+    "../peprn"
+  ],
+  "dependencies": {
+    "peprn": "workspaces:*"
+  }
+}
