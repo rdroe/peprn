@@ -18,7 +18,7 @@ A prompt; at which you should type
 
 Result should look like 
 
-```json
+```
 {
   'match scalar': [
     { index: 0, match: true, left: 1, right: 1 },
