@@ -1,8 +1,5 @@
-
 import { isNode } from './util/index'
 import match from './match'
-
-
 import { createApp as createBrowserApp } from './browser'
 export { createBrowserApp }
 export { match }

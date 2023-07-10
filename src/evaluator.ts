@@ -72,7 +72,6 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                 successiveCalls[moduleName] = (
                     (async () => {
 
-
                         const results = await matched[o].fn.call(null, parsed, successiveCalls, id, appsSingleton)
                         const singletonPackage = { appId: id, apps: appsSingleton, args: parsed }
                         const callbackResults = await dataCallback(moduleName, results, singletonPackage)

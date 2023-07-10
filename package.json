@@ -10,7 +10,6 @@
     "string-argv": "^0.3.1",
     "zod": "npm:3.21.4"
   },
-
   "packageManager": "yarn@3.6.0",
   "devDependencies": {
     "@types/dexie": "^1.3.1",
@@ -28,6 +27,7 @@
     ".": "./dist/index.js",
     "./util": "./dist/util/exports.js",
     "./browser": "./dist/browser.js",
+    "./node": "./dist/node.js",
     "./match": "./dist/match/index.js"
   },
   "main": "nyargs",
@@ -51,6 +51,9 @@
       ],
       "match": [
         "dist/match/index.d.ts"
+      ],
+      "node": [
+        "dist/node"
       ]
     }
   }

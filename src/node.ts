@@ -1,12 +1,13 @@
-import { makeRunner, CliApp, Opts, DataHandler } from './evaluator'
+import { makeRunner, CliApp, Opts, DataHandler, CliApps } from './evaluator'
 import { isNode } from './util'
 import { ReplOptions, REPLServer } from 'node:repl'
+import { ParsedCli } from 'util/cliParser'
 
 export const apps: { [id: string]: CliApp } = {}
 
 
-const genericDataHandler: DataHandler = async (id: string, data: any, { args: ParsedCli, appId: string, apps: CliApps }) => {
-    const zodStore = apps[id].zodStore
+const genericDataHandler: DataHandler = async (id: string, data: any, argz: { args: ParsedCli, appId: string, apps: CliApps }) => {
+    const zodStore = apps[argz.appId].zodStore
     zodStore[Date.now()] = data
     return data
 }
@@ -16,18 +17,22 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
 
     const { id } = opts
     if (isNode()) {
-        const { default: repl } = await new (Function(`import('node:repl')`)()) as {
+
+
+        const xProm = (new Function(`return import('node:repl')`)()) as Promise<{
             default: {
                 start: ((opts: typeof nodeReplOpts) => typeof nodeRepl)
 
             }
-        }
+        }>
+
         apps[id] = {
             evaluator: runner ? runner : makeRunner({ ...opts }, apps),
             zodStore: {},
             dataHandler: opts.dataHandler ?? genericDataHandler,
             userEffects: opts.userEffects ?? []
         }
+        const { default: repl } = await xProm
 
         repl.start({
             prompt: '> ',
