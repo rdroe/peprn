@@ -1,6 +1,6 @@
-import { CallReturn, makeRunner, CliApp, ZodStore, Opts, DataHandler } from './evaluator'
-import strlog from './util/strlog'
+import { makeRunner, CliApp, Opts, DataHandler } from './evaluator'
 import { isNode } from './util'
+import { ReplOptions, REPLServer } from 'node:repl'
 
 export const apps: { [id: string]: CliApp } = {}
 
@@ -10,12 +10,17 @@ const genericDataHandler: DataHandler = async (id: string, data: any, { args: Pa
     zodStore[Date.now()] = data
     return data
 }
-
+let nodeReplOpts: ReplOptions
+let nodeRepl: REPLServer
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
     const { id } = opts
     if (isNode()) {
-        const { default: repl } = await import('node:repl')
+        const { default: repl } = await new (Function(`import('node:repl')`)()) as {
+            default: {
+                start: ((opts: typeof nodeReplOpts) => typeof nodeRepl)
 
+            }
+        }
         apps[id] = {
             evaluator: runner ? runner : makeRunner({ ...opts }, apps),
             zodStore: {},
