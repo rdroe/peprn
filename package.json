@@ -2,7 +2,12 @@
   "author": "rdroe",
   "license": "MIT",
   "name": "peprn",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "description": "parse, evaluate, print, and repeat nested subcommands in node or the browser"  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rdroe/peprn.git"
+  },
   "dependencies": {
     "@testing-library/react": "^14.0.0",
     "@types/node": "^18.16.17",
