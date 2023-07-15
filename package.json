@@ -12,9 +12,11 @@
     "@testing-library/react": "^14.0.0",
     "@types/node": "^18.16.17",
     "@types/shelljs": "^0.8.12",
-    "dexie": "^3.2.3",
+    "dexie": "^3.2.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "shelljs": "^0.8.5",
-    "string-argv": "^0.3.1",
+    "string-argv": "^0.3.2",
     "ts-node": "^10.9.1",
     "zod": "npm:3.21.4"
   },
@@ -22,7 +24,7 @@
   "devDependencies": {
     "@types/dexie": "^1.3.1",
     "@types/node": "^18.15.1",
-    "esbuild": "^0.17.11",
+    "esbuild": "^0.18.13",
     "http-server": "^14.1.1",
     "nodemon": "npm:2.0.22",
     "typescript": "^4.9.5"
@@ -33,7 +35,7 @@
   },
   "exports": {
     ".": "./dist/index.js",
-    "./util": "./dist/util/exports.js",
+    "./util": "./dist/util/index.js",
     "./browser": "./dist/browser.js",
     "./node": "./dist/node.js",
     "./match": "./dist/match/index.js"

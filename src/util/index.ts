@@ -1,13 +1,7 @@
-
-
-
-export const isNode = () => {
-
-    try {
-        const fn = new Function("try { return window.document === undefined } catch(e) { return true; }")
-        return fn()
-    } catch (e) {
-        console.log('presuming browser environment because isNode() errored out')
-        return false
-    }
-}
+export * from './cliParser'
+export * from './types'
+export * from './validation'
+export { default as strlog } from './strlog'
+export * from './predicates'
+export { default as awaitAll } from './awaitAll'
+export * from './react-utils'

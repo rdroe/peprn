@@ -1,2 +1,2 @@
-import { app } from './mybrowserapp.js'
-app()
+import './mybrowserapp.js'
+

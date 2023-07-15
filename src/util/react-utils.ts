@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { createBrowserApp, DataHandler } from 'peprn';
-import { apps, cleanHistory, earlySaveHistory } from "peprn/browser";
-import { ParsedCli } from 'peprn/util';
-
+import * as React from 'react'
+// import { useEffect, useRef, useState } from 'react';
+import { createBrowserApp, DataHandler } from '../index';
+import { apps } from '../browser';
+import { cleanHistory, earlySaveHistory } from '../browser-default-history';
+import { ParsedCli } from './cliParser';
 
 const createAppIntervals: {
     [prop: string]: ReturnType<typeof setInterval>
@@ -34,17 +35,17 @@ export const useFakeCli = () => {
 
 export const useCreateApp = (...appArgs: Parameters<typeof createBrowserApp>) => {
 
-    const [initted, setInitted] = useState(false)
+    const [initted, setInitted] = React.useState(false)
 
-    const ta = useRef<HTMLTextAreaElement | null>(null)
-    const out = useRef<HTMLDivElement | null>(null)
+    const ta = React.useRef<HTMLTextAreaElement | null>(null)
+    const out = React.useRef<HTMLDivElement | null>(null)
 
     const id = appArgs[0].id
 
     const taSel = `#${id}`
     const outSel = `#${id}-out`
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (initted) return
 
         if (createAppIntervals[id] === undefined) {
@@ -59,7 +60,7 @@ export const useCreateApp = (...appArgs: Parameters<typeof createBrowserApp>) =>
         }
     }, [])
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (!initted) return
         createBrowserApp(...appArgs);
     }, [initted])
@@ -68,7 +69,7 @@ export const useCreateApp = (...appArgs: Parameters<typeof createBrowserApp>) =>
 
 // use once per app
 const useAppsInitted = (ids: string[], addId: (inittedId: string) => void) => {
-    useEffect(() => {
+    React.useEffect(() => {
 
         const inittedAppIntervals: {
             [prop: string]: ReturnType<typeof setInterval>
@@ -89,9 +90,9 @@ const useAppsInitted = (ids: string[], addId: (inittedId: string) => void) => {
 
 export const useOnAppsInitted = (requiredIds: string[], fn: (...args: any[]) => void) => {
 
-    const [ran, setRan] = useState(false)
+    const [ran, setRan] = React.useState(false)
 
-    const [initted, setInitted] = useState<string[]>([])
+    const [initted, setInitted] = React.useState<string[]>([])
     const addId = (inittedId: string) => {
         if (!initted.includes(inittedId)) {
             initted.push(inittedId)
@@ -99,7 +100,7 @@ export const useOnAppsInitted = (requiredIds: string[], fn: (...args: any[]) => 
         }
     }
     useAppsInitted(requiredIds, addId)
-    useEffect(() => {
+    React.useEffect(() => {
         if (ran) return
         const firstUninitialized = requiredIds.find((requiredId: string) => initted.includes(requiredId) === false)
 

@@ -29,6 +29,7 @@ cli(`echo "node 16+ is required"`)
                     return rej(`Could not get valid user input`)
                 })
             })
+
             rl.close()
         } catch (e) {
             rl.close()
