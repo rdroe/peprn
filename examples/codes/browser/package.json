@@ -1,0 +1,37 @@
+{
+    "name": "my-bootstrapped",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
+    "description": "a browser app that allows yargs use in an xterm-js terminal",
+    "keywords": [
+        "yargs",
+	"node",
+	"browser",
+	"cli"
+    ],
+    "dependencies": {
+        "http-server": "^14.1.0",
+        "nodemon": "^2.0.16",
+        "xterm": "^4.18.0",
+        "yargs": "^17.5.1",
+	"nyargs": "^1.0.0"
+    },
+    "devDependencies": {
+        "@types/isomorphic-fetch": "^0.0.36",
+        "@types/yargs": "^17.0.10",
+        "esbuild": "^0.14.38",
+        "typescript": "^4.6.4"
+    },
+    "scripts": {
+        "note": "echo \"first build typescript; then build javascript, which will work off of typescript output; at any time, build css. to understand the goal of the build, see main.js. main.js imports the results of the build.",
+        "ts-dev": "tsc -w",
+        "ts-build": "tsc",
+        "js-build": "node build.js",
+        "css-build": "esbuild --bundle css/main.css --outfile=public/css/style.css",
+        "mon": "yarn nodemon --exec \"yarn ts-build && yarn css-build && yarn js-build\" --watch ../../dist-browser --watch ./src --watch ./css --ext js,ts,mjs,ts,css  --ignore public",
+        "start": "yarn http-server --mimetypes mime.types",
+        "mon2": "yarn nodemon --exec \"yarn ts-build && yarn js-build\" --watch ../../dist-browser --watch ./src --ext js,ts,mjs,ts --ignore public"
+    },
+    "packageManager": "yarn@3.2.0"
+}

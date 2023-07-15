@@ -11,8 +11,11 @@
   "dependencies": {
     "@testing-library/react": "^14.0.0",
     "@types/node": "^18.16.17",
+    "@types/shelljs": "^0.8.12",
     "dexie": "^3.2.3",
+    "shelljs": "^0.8.5",
     "string-argv": "^0.3.1",
+    "ts-node": "^10.9.1",
     "zod": "npm:3.21.4"
   },
   "packageManager": "yarn@3.6.0",

@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+	"rootDir": "./src",
+	"baseUrl": "./",
+	"esModuleInterop": true,
+	"moduleResolution": "node",
+	"noImplicitAny": true,
+	"removeComments": false,
+	"preserveConstEnums": true,
+	"sourceMap": true,
+        "outDir": "./public/js/",
+	"declaration": true,
+	"allowJs": true,
+	"lib": ["dom", "es2019", "ES2015"],
+	"noEmit": false,
+        "target": "es2019",
+        "skipLibCheck": true,
+        "allowSyntheticDefaultImports": true
+    },
+    "include": ["./src/**/*.ts"],
+    "watchOptions": {
+	"watchDirectory": "useFsEvents"
+    }
+}

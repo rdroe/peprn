@@ -1,0 +1,27 @@
+node_modules
+dist/
+**/.DS_Store
+\#*
+**/\#
+.\#*
+*~
+.env
+yarn-error.log
+.yarn/*
+!.yarn/plugins
+!.yarn/releases
+
+
+
+# output directories
+public/css
+!public/js
+public/js/**/*
+!public/js/glue.js
+
+# individual "glue" output
+main.js
+main.d.ts
+
+# extension-based output
+*.js.map
