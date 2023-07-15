@@ -12,7 +12,7 @@ cli(`echo "node 16+ is required"`)
         const parsedMajor = parseInt(result.replace('v', ''), 10)
         msg(`installed version: ${result}`)
         if (parsedMajor < 16) return null
-        return `cd ../../ && pwd`
+        return `cd ../ && pwd`
     })
     .replace(async (workingDir) => {
         const defaultDir = `${workingDir.trim()}/${defaultProjName}`
@@ -52,7 +52,7 @@ cli(`echo "node 16+ is required"`)
 pwd
 echo "target dir on delete is ${targetDir}/"
 rm -rf ${targetDir}
-cp -r codes/browser ${targetDir}/`
+cp -r examples/codes/browser ${targetDir}/`
     })
     .replace(() => {
         msg('changing directory', targetDir)
