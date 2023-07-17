@@ -4,7 +4,7 @@ require('esbuild').build({
     entryPoints: ['./dist/testable/app.js'],
     bundle: true,
     outfile: './public/js/main.js',
-    sourcemap: false,
+    sourcemap: true,
     format: 'esm',
     platform: 'neutral',
     minify: true
