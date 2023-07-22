@@ -11,12 +11,13 @@
 	"outDir": "dist/",
 	"declaration": true,
 	"allowJs": true,
-	"lib": ["dom", "es2019"],
+	"lib": ["dom", "es2022"],
         "target": "esnext",
         "skipLibCheck": true,
         "composite": true,
         "rootDir": "./src/",
-        "baseUrl": "./src/",
+        "baseUrl": "./src/"
+        
     },
     "include": [
 	"./src"

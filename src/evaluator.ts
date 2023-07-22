@@ -2,7 +2,7 @@ import { getMatchingModules, parse, ParsedCli, yargsOptions } from './util/cliPa
 import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules } from './util/types'
-
+import { z } from 'zod'
 export type DataHandler = (inp: string, data: any, context: { args: ParsedCli, appId: string, apps: CliApps }) => Promise<void>
 
 export type Opts = {
@@ -13,6 +13,7 @@ export type Opts = {
     dataHandler?: DataHandler
     init?: (ownId: string, apps: CliApps) => void
     userEffects?: DataHandler[]
+    catch?: (err: Error, rawInput: string, parsedCli: ParsedCli | null) => void
 }
 
 export type ZodStore = {
@@ -45,57 +46,83 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
     const { modules = { match }, id } = opts
 
     return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
-
-        const input = opts.preprocessInput ? opts.preprocessInput(inputRaw, id, appsSingleton) : inputRaw
-
-        const parsed = parse({ match, ...modules }, yargsOptions, input)
-        const matched = getMatchingModules({ match, ...modules })(input)
+        let parsed: ParsedCli | null = null
 
 
-        const effects: DataHandler[] = Object.values(appsSingleton).map((app1) => app1.userEffects).reduce((fns, currFns) => {
-            return fns.concat(currFns)
-        }, [] as DataHandler[])
+        try {
+            const input = opts.preprocessInput ? opts.preprocessInput(inputRaw, id, appsSingleton) : inputRaw
 
-        // here, use the module-matching functions from the recent work on event-y things.
-        if (matched.length) {
-
-            matched.reverse()
-            const modNames = [...parsed.moduleNames]
-            modNames.reverse()
-
-            let n = 0
-            const successiveCalls: { [modName: string]: Promise<unknown> } = {}
-
-            do {
-                const o = n
-                const moduleName = modNames[o]
-                successiveCalls[moduleName] = (
-                    (async () => {
-
-                        const results = await matched[o].fn.call(null, parsed, successiveCalls, id, appsSingleton)
-                        const singletonPackage = { appId: id, apps: appsSingleton, args: parsed }
-                        const callbackResults = await dataCallback(moduleName, results, singletonPackage)
-
-                        await Promise.all(effects.map((fn1) => {
-
-                            return fn1(moduleName, callbackResults, singletonPackage)
-                        }
-                        ))
-                        return callbackResults
-                    })()
-                )
-                n += 1
-            } while (!!matched[n])
+            parsed = parse({ match, ...modules }, yargsOptions, input)
+            const matched = getMatchingModules({ match, ...modules })(input)
 
 
-            const allData = await awaitAll(successiveCalls)
-            if (finalCallback) { finalCallback(null, allData) }
+            const effects: DataHandler[] = Object.values(appsSingleton).map((app1) => app1.userEffects).reduce((fns, currFns) => {
+                return fns.concat(currFns)
+            }, [] as DataHandler[])
+
+            // here, use the module-matching functions from the recent work on event-y things.
+            if (matched.length) {
+
+                matched.reverse()
+                const modNames = [...parsed.moduleNames]
+                modNames.reverse()
+
+                let n = 0
+                const successiveCalls: { [modName: string]: Promise<unknown> } = {}
+
+                do {
+                    const o = n
+                    const moduleName = modNames[o]
+                    successiveCalls[moduleName] = (
+                        (async () => {
+
+                            const results = await matched[o].fn.call(null, parsed, successiveCalls, id, appsSingleton)
+                            const singletonPackage = { appId: id, apps: appsSingleton, args: parsed }
+                            const callbackResults = await dataCallback(moduleName, results, singletonPackage)
+
+                            await Promise.all(effects.map((fn1) => {
+
+                                return fn1(moduleName, callbackResults, singletonPackage)
+                            }
+                            ))
+                            return callbackResults
+                        })()
+                    )
+                    n += 1
+                } while (!!matched[n])
 
 
+                const allData = await awaitAll(successiveCalls)
+                if (finalCallback) { finalCallback(null, allData) }
 
-        } else {
-            finalCallback(null, null)
+            } else {
+                finalCallback(null, null)
+            }
+        } catch (e: unknown) {
+            try {
+                const isError = z.object({
+                    message: z.string(),
+                    name: z.string()
+                }).safeParse(e)
+
+                if (!isError) {
+                    throw e
+                }
+
+                if (opts.catch) {
+                    if (isError) {
+                        opts.catch(e as Error, inputRaw, parsed)
+                    }
+                    return
+                }
+
+                throw new Error(`Could not respond to ${inputRaw} (and peprn app ${opts.id} has no "catch" parametric property)`, { cause: e })
+
+            } catch (e) {
+                throw new Error(`Could not respond to ${inputRaw}; and what got thrown could not be duck-typed  to  an Error`, { cause: e })
+            }
         }
     }
 }
+
 
