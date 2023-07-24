@@ -6,8 +6,8 @@ import { ParsedCli } from 'util/cliParser'
 export const apps: { [id: string]: CliApp } = {}
 
 
-const genericDataHandler: DataHandler = async (id: string, data: any, argz: { args: ParsedCli, appId: string, apps: CliApps }) => {
-    const zodStore = apps[argz.appId].zodStore
+const genericDataHandler: DataHandler = async (args, data, appId) => {
+    const zodStore = apps[appId].zodStore
     zodStore[Date.now()] = data
     return data
 }

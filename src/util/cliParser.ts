@@ -3,7 +3,6 @@ import { Module, Modules } from "./types"
 import { z } from 'zod'
 import { single, isNumber } from './validation'
 
-
 type Opt = {
     type?: 'string' | 'number' | 'boolean' | 'bool'
     array?: boolean

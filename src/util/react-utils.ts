@@ -5,6 +5,7 @@ import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
 import { ParsedCli } from './cliParser';
 
+
 const createAppIntervals: {
     [prop: string]: ReturnType<typeof setInterval>
 } = {}
@@ -123,7 +124,7 @@ export const useAddUserEffectFn = (id: string) => {
         if (apps && apps[id]) {
             apps[id].userEffects.push(async (...dHArgs: Parameters<DataHandler>) => {
                 if (
-                    argsMatcher(dHArgs[2].args)
+                    argsMatcher(dHArgs[0])
                 ) {
                     return fn(...dHArgs)
                 }

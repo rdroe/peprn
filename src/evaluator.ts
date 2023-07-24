@@ -3,7 +3,7 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules } from './util/types'
 import { z } from 'zod'
-export type DataHandler = (inp: string, data: any, context: { args: ParsedCli, appId: string, apps: CliApps }) => Promise<void>
+export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
 
 export type Opts = {
     id: string
@@ -55,11 +55,13 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
             parsed = parse({ match, ...modules }, yargsOptions, input)
             const matched = getMatchingModules({ match, ...modules })(input)
 
-
+            /*
             const effects: DataHandler[] = Object.values(appsSingleton).map((app1) => app1.userEffects).reduce((fns, currFns) => {
+
                 return fns.concat(currFns)
             }, [] as DataHandler[])
-
+*/
+            const effects = appsSingleton[id]?.userEffects ?? []
             // here, use the module-matching functions from the recent work on event-y things.
             if (matched.length) {
 
@@ -77,12 +79,12 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                         (async () => {
 
                             const results = await matched[o].fn.call(null, parsed, successiveCalls, id, appsSingleton)
-                            const singletonPackage = { appId: id, apps: appsSingleton, args: parsed }
-                            const callbackResults = await dataCallback(moduleName, results, singletonPackage)
+
+                            const callbackResults = await dataCallback(parsed, results, id)
 
                             await Promise.all(effects.map((fn1) => {
-
-                                return fn1(moduleName, callbackResults, singletonPackage)
+                                console.log('calling effect', fn1.toString(), 'for', id)
+                                return fn1(parsed, results, id)
                             }
                             ))
                             return callbackResults

@@ -12,13 +12,11 @@ const makeFinalCallback = (id: string, res: Function) => async (err: null | Erro
     apps[id].restarter = makeProm(id)
 }
 
-const genericDataHandler: DataHandler = async (input, data: any, { args: ParsedCli, appId: uniqueAppId, apps: CliApps }) => {
+const genericDataHandler: DataHandler = async (parsed, data, uniqueAppId) => {
     const zodStore = apps[uniqueAppId].zodStore
     zodStore[Date.now()] = data
-
     const dataEl = apps[uniqueAppId].dataEl as HTMLElement
     dataEl.innerHTML = `${dataEl.innerHTML}\n${JSON.stringify(data, null, 2)}`
-    return data
 }
 
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
@@ -47,6 +45,7 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
         opts.init(id, apps)
     }
 }
+
 
 function makeProm(id: string) {
     return new Promise<void>((res) => {
