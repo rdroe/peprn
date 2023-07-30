@@ -1,7 +1,7 @@
-import { makeRunner, CliApp, Opts, DataHandler, CliApps } from './evaluator'
+import { makeRunner, CliApp, Opts, DataHandler } from './evaluator'
 import { isNode } from './util'
 import { ReplOptions, REPLServer } from 'node:repl'
-import { ParsedCli } from 'util/cliParser'
+
 
 export const apps: { [id: string]: CliApp } = {}
 
@@ -17,7 +17,9 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
 
     const { id } = opts
     if (isNode()) {
-
+        if (opts.userKeyEffects) {
+            console.warn('"userKeyEffects" is not yet implemented for node platform')
+        }
 
         const xProm = (new Function(`return import('node:repl')`)()) as Promise<{
             default: {
@@ -30,7 +32,8 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
             evaluator: runner ? runner : makeRunner({ ...opts }, apps),
             zodStore: {},
             dataHandler: opts.dataHandler ?? genericDataHandler,
-            userEffects: opts.userEffects ?? []
+            userEffects: opts.userEffects ?? [],
+            userKeyEffects: []
         }
         const { default: repl } = await xProm
 

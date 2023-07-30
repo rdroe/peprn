@@ -4,7 +4,7 @@ import match from './match'
 import { Modules } from './util/types'
 import { z } from 'zod'
 export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
-
+export type KeyHandler = (key: KeyboardEvent, appId: string) => Promise<void>
 export type Opts = {
     id: string
     modules?: Modules
@@ -13,6 +13,7 @@ export type Opts = {
     dataHandler?: DataHandler
     init?: (ownId: string, apps: CliApps) => void
     userEffects?: DataHandler[]
+    userKeyEffects?: KeyHandler[]
     catch?: (err: Error, rawInput: string, parsedCli: ParsedCli | null) => void
 }
 
@@ -34,6 +35,7 @@ export type CliApp = {
     historyData?: string[]
     histCursor?: number
     userEffects: DataHandler[]
+    userKeyEffects: KeyHandler[]
 }
 
 export type CliApps = { [id: string]: CliApp }
@@ -55,12 +57,6 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
             parsed = parse({ match, ...modules }, yargsOptions, input)
             const matched = getMatchingModules({ match, ...modules })(input)
 
-            /*
-            const effects: DataHandler[] = Object.values(appsSingleton).map((app1) => app1.userEffects).reduce((fns, currFns) => {
-
-                return fns.concat(currFns)
-            }, [] as DataHandler[])
-*/
             const effects = appsSingleton[id]?.userEffects ?? []
             // here, use the module-matching functions from the recent work on event-y things.
             if (matched.length) {
@@ -83,7 +79,6 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                             const callbackResults = await dataCallback(parsed, results, id)
 
                             await Promise.all(effects.map((fn1) => {
-                                console.log('calling effect', fn1.toString(), 'for', id)
                                 return fn1(parsed, results, id)
                             }
                             ))

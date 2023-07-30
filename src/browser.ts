@@ -36,7 +36,8 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
         zodStore: {},
         dataHandler: opts.dataHandler ? opts.dataHandler : genericDataHandler,
         restarter: null,
-        userEffects: opts.userEffects ?? []
+        userEffects: opts.userEffects ?? [],
+        userKeyEffects: opts.userKeyEffects ?? []
     }
 
     apps[id].restarter = makeProm(id)
@@ -62,8 +63,11 @@ function makeProm(id: string) {
                 await apps[id].history(ev, evalInter)
             }
 
-            if (ev.key === 'Enter' && !ev.shiftKey) {
+            await Promise.all(apps[id].userKeyEffects.map((fn1) => {
+                return fn1(ev, id)
+            }))
 
+            if (ev.key === 'Enter' && !ev.shiftKey) {
                 apps[id].el.value = ''
             }
         }
