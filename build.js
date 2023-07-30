@@ -1,12 +1,12 @@
 const fs = require('node:fs')
 require('esbuild').build({
-    external: ['node:repl', 'react', 'react-dom'],
+    external: ['node:repl'],
     entryPoints: ['./dist/testable/app.js'],
     bundle: true,
     outfile: './public/js/main.js',
     sourcemap: true,
     format: 'esm',
-    platform: 'neutral',
+    platform: 'browser',
     minify: true
 }).then((dat) => {
     if (dat.metafile) {
