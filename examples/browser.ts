@@ -1,7 +1,7 @@
 import { cli, grn, termGreenMsg } from '../src/util/cli'
 import * as readline from 'readline';
 import { stdin as input, stdout as output } from 'node:process'
-console.log('ran this file')
+
 let targetDir: string
 
 const defaultProjName = 'peprn-browser-app'
@@ -46,8 +46,8 @@ cli(`echo "node 16+ is required"`)
         return `echo 'set target dir to "${targetDir}"'`
     })
     .wait(() => {
-        msg('current dir')
-        msg('waited', targetDir)
+        // msg('current dir')
+        // msg('waited', targetDir)
         return `
 pwd
 echo "target dir on delete is ${targetDir}/"
@@ -59,13 +59,15 @@ cp -r examples/codes/browser ${targetDir}/`
         process.chdir(targetDir)
         return `yarn set version berry && yarn config set nodeLinker node-modules`
     }).replace((prior) => {
-        msg('curr node directory:', process.cwd())
         return `echo "${prior} ; starting install...."
 pwd
 yarn
 `
     }).replace(() => {
         msg('finished yarn install')
+        return `yarn add peprn`
+    }).replace(() => {
+        msg('added latest peprn from npm')
         return `yarn ts-build`
     }).replace(() => {
         msg('finished ts-build')

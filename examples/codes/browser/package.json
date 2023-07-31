@@ -8,7 +8,6 @@
         "@types/react": "^18.2.15",
         "http-server": "^14.1.0",
         "nodemon": "^2.0.16",
-        "peprn": "^0.2.0",
         "react": "18.2.0",
         "react-dom": "18.2.0",
         "typescript": "4.*.*"
