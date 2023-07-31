@@ -79,6 +79,7 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                             const callbackResults = await dataCallback(parsed, results, id)
 
                             await Promise.all(effects.map((fn1) => {
+                                console.log('calling', fn1.toString())
                                 return fn1(parsed, results, id)
                             }
                             ))

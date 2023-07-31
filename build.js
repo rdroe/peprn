@@ -1,6 +1,6 @@
 const fs = require('node:fs')
 require('esbuild').build({
-    external: ['node:repl'],
+    external: ['node:repl', 'react'],
     entryPoints: ['./dist/testable/app.js'],
     bundle: true,
     outfile: './public/js/main.js',

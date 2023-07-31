@@ -115,14 +115,17 @@ export const useOnAppsInitted = (requiredIds: string[], fn: (...args: any[]) => 
 export const useAddUserEffectFn = (id: string) => {
 
     return (fn: DataHandler, argsMatcher: (parsedCli: ParsedCli) => boolean = () => true) => {
+
         if (!apps || !apps[id]) return
 
         if (apps[id].userEffects.find(anFn => anFn === fn) !== undefined) {
+
             return
         }
-
+        console.log('adding ue', fn)
         if (apps && apps[id]) {
             apps[id].userEffects.push(async (...dHArgs: Parameters<DataHandler>) => {
+                console.log('id0', dHArgs[2], 'id1', id)
                 if (
                     argsMatcher(dHArgs[0])
                 ) {
