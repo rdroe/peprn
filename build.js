@@ -1,11 +1,10 @@
 const fs = require('node:fs')
 require('esbuild').build({
-    external: ['node:repl', 'react'],
+    external: ['node:repl'],
     entryPoints: ['./dist/testable/app.js'],
     bundle: true,
     outfile: './public/js/main.js',
     sourcemap: true,
-    format: 'esm',
     platform: 'browser',
     minify: true
 }).then((dat) => {

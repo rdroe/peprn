@@ -1,7 +1,9 @@
-import * as React from 'react'
+import React from 'react'
 import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../index';
 import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
+
+
 const createAppIntervals: {
     [prop: string]: ReturnType<typeof setInterval>
 } = {}
@@ -31,7 +33,6 @@ export const useFakeCli = () => {
 }
 
 export const useCreateApp = (...appArgs: Parameters<typeof createBrowserApp>) => {
-
     const [initted, setInitted] = React.useState(false)
 
     const ta = React.useRef<HTMLTextAreaElement | null>(null)

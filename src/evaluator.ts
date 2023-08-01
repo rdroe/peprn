@@ -3,6 +3,7 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules } from './util/types'
 import { z } from 'zod'
+
 export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
 export type KeyHandler = (key: KeyboardEvent, appId: string) => Promise<void>
 export type Opts = {

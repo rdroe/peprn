@@ -1,9 +1,8 @@
 import { makeHistory, history as historyCmd } from './browser-default-history'
 import { makeRunner, CliApp, Opts, EvalInteraction, DataHandler } from './evaluator'
 
-
+export * from './util/react-utils'
 export { earlySaveHistory, cleanHistory } from './browser-default-history'
-
 export const apps: { [id: string]: CliApp } = {}
 
 const makeFinalCallback = (id: string, res: Function) => async (err: null | Error, result: any) => {

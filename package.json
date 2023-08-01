@@ -13,11 +13,15 @@
     "@types/node": "^18.16.17",
     "@types/shelljs": "^0.8.12",
     "dexie": "^3.2.4",
+    "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "shelljs": "^0.8.5",
     "string-argv": "^0.3.2",
     "ts-node": "^10.9.1",
     "zod": "npm:3.21.4"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
   },
   "packageManager": "yarn@3.6.0",
   "devDependencies": {
@@ -27,9 +31,6 @@
     "http-server": "^14.1.1",
     "nodemon": "npm:2.0.22",
     "typescript": "^4.9.5"
-  },
-  "peerDependencies": {
-    "react": "^18.2.0"
   },
   "scripts": {
     "mon": "nodemon --exec \"yarn build\" --watch src --ext .ts,.js,.html",
