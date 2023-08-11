@@ -65,7 +65,7 @@ yarn
 `
     }).replace(() => {
         msg('finished yarn install')
-        return `yarn add peprn`
+        return `yarn add peprn@0.2.*`
     }).replace(() => {
         msg('added latest peprn from npm')
         return `yarn ts-build`

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import ReactDOM from 'react-dom/client'
-import { useCreateApp } from 'peprn/util'
+import { useCreateApp } from 'peprn/browser'
 import match from 'peprn/match'
 
 function App() {
