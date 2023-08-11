@@ -65,16 +65,42 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
             const matched = getMatchingModules({ match, ...modules })(input)
 
             const effects = appsSingleton[id]?.userEffects ?? []
-            // here, use the module-matching functions from the recent work on event-y things.
-            if (matched.length) {
+            console.log('input', input.trim().split(' '))
 
+            if (matched.length) {
                 matched.reverse()
                 const modNames = [...parsed.moduleNames]
+
                 modNames.reverse()
 
-                let n = 0
-                const successiveCalls: { [modName: string]: Promise<unknown> } = {}
+                if (input.trim().split(' ').includes('--help') || input.trim().split(' ').includes('-h')) {
+                    console.log('all parsing', parsed)
+                    const modHelp = matched.filter(({ help }) => {
+                        return !!help
+                    })
 
+                    let helpResults: any = "no help defined"
+
+                    if (modHelp[0]) {
+                        helpResults = modHelp[0]
+                        const examplePrefix = parsed.commands.join(' ')
+                        helpResults = {
+                            [examplePrefix]: modHelp[0].help.description,
+                            examples: !modHelp[0].help.examples ? {} : Object.fromEntries(Object.entries(
+                                modHelp[0].help.examples
+                            ).map(([exampleArgs, exampleDes]) => {
+                                return [`${examplePrefix} ${exampleArgs}`, exampleDes]
+                            }))
+                        }
+                    }
+
+                    finalCallback(null, helpResults)
+                    return
+                }
+
+                let n = 0
+
+                const successiveCalls: { [modName: string]: Promise<unknown> } = {}
                 do {
                     const o = n
                     const moduleName = modNames[o]
@@ -98,13 +124,14 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                     n += 1
                 } while (!!matched[n])
 
-
                 const allData = await awaitAll(successiveCalls)
                 if (finalCallback) { finalCallback(null, allData) }
 
             } else {
                 finalCallback(null, null)
             }
+
+
         } catch (e: unknown) {
             try {
                 const isError = z.object({

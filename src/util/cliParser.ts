@@ -69,6 +69,7 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
             if (temp.lastCommandReached) throw new Error(`Invariant violated; last command should be surpassed if module names are still being encountered.`)
             if (undefined === currSubmodules[curr]) throw new Error(`Invariant violated; as a module name "${curr}" should be a property name in the current submodules being analyzed.`)
             if (!temp.lastCommandReached) {
+                accum.commands.push(curr)
                 currModuleName = `${currModuleName} ${curr}`.trim()
                 currSubmodules = currSubmodules[curr].submodules
                 const und = accum['_'] ?? []
