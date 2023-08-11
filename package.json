@@ -2,7 +2,7 @@
   "author": "rdroe",
   "license": "MIT",
   "name": "peprn",
-  "version": "0.2.11",
+  "version": "0.2.13",
   "description": "parse, evaluate, print, and repeat nested subcommands in node or the browser",
   "repository": {
     "type": "git",
@@ -19,6 +19,9 @@
     "string-argv": "^0.3.2",
     "ts-node": "^10.9.1",
     "zod": "npm:3.21.4"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
   },
   "packageManager": "yarn@3.6.0",
   "devDependencies": {

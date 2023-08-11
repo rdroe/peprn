@@ -1,22 +1,28 @@
 import * as utils from './util'
 import match from './match'
-import { createApp as createBrowserApp } from './browser'
-export { createBrowserApp }
+
+import { makeRunner, Opts } from './evaluator'
+
+
 export { match }
 
 
 export * from './evaluator'
 
-export const createServerApp = async (...args: Parameters<typeof createBrowserApp>) => {
+export const createServerApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
     if (utils.isNode()) {
         const defaultModule = await import('./node')
-        return defaultModule.createApp(...args)
+        return defaultModule.createApp(opts, runner)
     }
-    return createBrowserApp(...args)
+    throw new Error(`createServerApp cannot be used in the browser.`)
 }
 
 
-if (!utils.isNode()) {
-
-    (window as any).createBrowserApp = createBrowserApp
+export const createBrowserApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
+    if (!utils.isNode()) {
+        const defaultModule = await import('./browser')
+        return defaultModule.createApp(opts, runner)
+    }
+    throw new Error(`createBrowserApp cannot be used in node.`)
 }
+

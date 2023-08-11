@@ -5,7 +5,6 @@ require('esbuild').build({
     bundle: true,
     outfile: './public/js/main.js',
     sourcemap: true,
-    format: 'esm',
     platform: 'browser',
     minify: true
 }).then((dat) => {

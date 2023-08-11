@@ -1,9 +1,7 @@
-import * as React from 'react'
-// import { useEffect, useRef, useState } from 'react';
-import { createBrowserApp, DataHandler } from '../index';
+import React from 'react'
+import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../index';
 import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
-import { ParsedCli } from './cliParser';
 
 
 const createAppIntervals: {
@@ -35,7 +33,6 @@ export const useFakeCli = () => {
 }
 
 export const useCreateApp = (...appArgs: Parameters<typeof createBrowserApp>) => {
-
     const [initted, setInitted] = React.useState(false)
 
     const ta = React.useRef<HTMLTextAreaElement | null>(null)
@@ -112,23 +109,22 @@ export const useOnAppsInitted = (requiredIds: string[], fn: (...args: any[]) => 
     }, [JSON.stringify(initted)])
 }
 
+
 export const useAddUserEffectFn = (id: string) => {
 
-    return (fn: DataHandler, argsMatcher: (parsedCli: ParsedCli) => boolean = () => true) => {
+    return (fn: DataHandler, argsMatcher: ArgsMatcher = () => true) => {
+
         if (!apps || !apps[id]) return
 
-        if (apps[id].userEffects.find(anFn => anFn === fn) !== undefined) {
-            return
+        if (apps[id].userEffects.find(anFn => {
+            return anFn === fn
+        }) !== undefined) {
+            return false
         }
 
         if (apps && apps[id]) {
-            apps[id].userEffects.push(async (...dHArgs: Parameters<DataHandler>) => {
-                if (
-                    argsMatcher(dHArgs[0])
-                ) {
-                    return fn(...dHArgs)
-                }
-            })
+            apps[id].userEffects.push(fn)
+            argsMatchers.set(fn, argsMatcher)
         }
 
     }

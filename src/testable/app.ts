@@ -10,7 +10,6 @@ createBrowserApp({
         async (key, ownId) => {
             const currCmd = apps[ownId].el.value
             localStorage.setItem('match:initial', currCmd)
-            console.log('key and current input', key, currCmd)
         }
     ],
     init: (ownId) => {

@@ -2,17 +2,18 @@ import { makeRunner, CliApp, Opts, DataHandler } from './evaluator'
 import { isNode } from './util'
 import { ReplOptions, REPLServer } from 'node:repl'
 
-
 export const apps: { [id: string]: CliApp } = {}
 
-
-const genericDataHandler: DataHandler = async (args, data, appId) => {
+const genericDataHandler: DataHandler = async (_, data, appId) => {
     const zodStore = apps[appId].zodStore
     zodStore[Date.now()] = data
     return data
 }
+
 let nodeReplOpts: ReplOptions
+
 let nodeRepl: REPLServer
+
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
 
     const { id } = opts
@@ -35,6 +36,7 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
             userEffects: opts.userEffects ?? [],
             userKeyEffects: []
         }
+
         const { default: repl } = await xProm
 
         repl.start({

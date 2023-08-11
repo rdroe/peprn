@@ -17,7 +17,6 @@
         "composite": true,
         "rootDir": "./src/",
         "baseUrl": "./src/"
-        
     },
     "include": [
 	"./src"

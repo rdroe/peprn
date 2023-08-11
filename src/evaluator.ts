@@ -3,6 +3,7 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules } from './util/types'
 import { z } from 'zod'
+
 export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
 export type KeyHandler = (key: KeyboardEvent, appId: string) => Promise<void>
 export type Opts = {
@@ -42,7 +43,8 @@ export type CliApps = { [id: string]: CliApp }
 export type EvalInteraction = 'called' | 'not-called'
 
 export type CallReturn = (err: null | Error, success: any) => void
-
+export type ArgsMatcher = (parsedCli: ParsedCli) => boolean
+export const argsMatchers = new Map<DataHandler, ArgsMatcher>
 export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, dataCallback: DataHandler, finalCallback: CallReturn) => Promise<void> => {
 
     const { modules = { match }, id } = opts
@@ -79,7 +81,10 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                             const callbackResults = await dataCallback(parsed, results, id)
 
                             await Promise.all(effects.map((fn1) => {
-                                return fn1(parsed, results, id)
+                                const matcher = argsMatchers.get(fn1) ?? null
+                                if (matcher === null || matcher(parsed)) {
+                                    return fn1(parsed, results, id)
+                                }
                             }
                             ))
                             return callbackResults
