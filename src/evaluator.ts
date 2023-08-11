@@ -1,7 +1,7 @@
 import { getMatchingModules, parse, ParsedCli, yargsOptions } from './util/cliParser'
 import awaitAll from './util/awaitAll'
 import match from './match'
-import { Modules } from './util/types'
+import { Modules, Module } from './util/types'
 import { z } from 'zod'
 
 export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
@@ -45,6 +45,36 @@ export type EvalInteraction = 'called' | 'not-called'
 export type CallReturn = (err: null | Error, success: any) => void
 export type ArgsMatcher = (parsedCli: ParsedCli) => boolean
 export const argsMatchers = new Map<DataHandler, ArgsMatcher>
+
+
+
+const isCallForHelp = (input: string): boolean => {
+    return input.trim().split(' ').includes('--help') || input.trim().split(' ').includes('-h')
+}
+
+const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
+
+    const modHelp = matched.filter(({ help }) => {
+        return !!help
+    })
+
+    let helpResults: any = "no help defined"
+
+    if (modHelp[0]) {
+        helpResults = modHelp[0]
+        const examplePrefix = parsed.commands.join(' ')
+        helpResults = {
+            [examplePrefix]: modHelp[0].help.description,
+            examples: !modHelp[0].help.examples ? {} : Object.fromEntries(Object.entries(
+                modHelp[0].help.examples
+            ).map(([exampleArgs, exampleDes]) => {
+                return [`${examplePrefix} ${exampleArgs}`, exampleDes]
+            }))
+        }
+    }
+    return helpResults
+}
+
 export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, dataCallback: DataHandler, finalCallback: CallReturn) => Promise<void> => {
 
     const { modules = { match }, id } = opts
@@ -65,38 +95,22 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
             const matched = getMatchingModules({ match, ...modules })(input)
 
             const effects = appsSingleton[id]?.userEffects ?? []
-            console.log('input', input.trim().split(' '))
+
 
             if (matched.length) {
+
                 matched.reverse()
-                const modNames = [...parsed.moduleNames]
-
-                modNames.reverse()
-
-                if (input.trim().split(' ').includes('--help') || input.trim().split(' ').includes('-h')) {
-                    console.log('all parsing', parsed)
-                    const modHelp = matched.filter(({ help }) => {
-                        return !!help
-                    })
-
-                    let helpResults: any = "no help defined"
-
-                    if (modHelp[0]) {
-                        helpResults = modHelp[0]
-                        const examplePrefix = parsed.commands.join(' ')
-                        helpResults = {
-                            [examplePrefix]: modHelp[0].help.description,
-                            examples: !modHelp[0].help.examples ? {} : Object.fromEntries(Object.entries(
-                                modHelp[0].help.examples
-                            ).map(([exampleArgs, exampleDes]) => {
-                                return [`${examplePrefix} ${exampleArgs}`, exampleDes]
-                            }))
-                        }
-                    }
-
+                if (isCallForHelp(input)) {
+                    const helpResults = getHelpOutput(
+                        matched,
+                        parsed
+                    )
                     finalCallback(null, helpResults)
                     return
                 }
+                const modNames = [...parsed.moduleNames]
+
+                modNames.reverse()
 
                 let n = 0
 
