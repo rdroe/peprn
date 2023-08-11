@@ -52,9 +52,19 @@ function makeProm(id: string) {
     return new Promise<void>((res) => {
         apps[id].el.onkeyup = async (ev: KeyboardEvent) => {
             let evalInter: EvalInteraction = 'not-called'
-            const t = apps[id].el.value
+            let t = apps[id].el.value
 
             if (ev.key === 'Enter' && !ev.shiftKey) {
+                const loc1 = apps[id].el.selectionStart
+                const loc2 = apps[id].el.selectionEnd
+                // in case user hit enter in middle of text
+                if (loc1 === loc2) {
+                    const x = t.charCodeAt(loc1 - 1)
+                    if (x === 10) {
+                        t = [apps[id].el.value.substring(0, loc1 - 1), apps[id].el.value.substring(loc1, apps[id].el.value.length)].join('')
+                        apps[id].el.value = t
+                    }
+                }
                 await apps[id].evaluator(t, apps[id].dataHandler, makeFinalCallback(id, res))
                 evalInter = 'called'
             }

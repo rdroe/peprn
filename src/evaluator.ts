@@ -10,7 +10,7 @@ export type Opts = {
     id: string
     modules?: Modules
     history?: CliApp['history']
-    preprocessInput?: (input: string, appId?: string, appsSingleton?: CliApps) => string
+    preprocessInput?: (input: string, appId?: string, appsSingleton?: CliApps) => string | null
     dataHandler?: DataHandler
     init?: (ownId: string, apps: CliApps) => void
     userEffects?: DataHandler[]
@@ -55,7 +55,12 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
 
         try {
             const input = opts.preprocessInput ? opts.preprocessInput(inputRaw, id, appsSingleton) : inputRaw
-
+            if (input === null) {
+                throw ({
+                    name: "user input could not be processed",
+                    message: `raw user input lead to invalid processing (possibly pre-processing)`
+                })
+            }
             parsed = parse({ match, ...modules }, yargsOptions, input)
             const matched = getMatchingModules({ match, ...modules })(input)
 
@@ -104,7 +109,7 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
             try {
                 const isError = z.object({
                     message: z.string(),
-                    name: z.string()
+                    name: z.string().optional()
                 }).safeParse(e)
 
                 if (!isError) {

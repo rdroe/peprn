@@ -2,7 +2,7 @@ import React from 'react'
 import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../index';
 import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
-
+type DataHandlerReactCallback = DataHandler
 
 const createAppIntervals: {
     [prop: string]: ReturnType<typeof setInterval>
@@ -112,7 +112,7 @@ export const useOnAppsInitted = (requiredIds: string[], fn: (...args: any[]) => 
 
 export const useAddUserEffectFn = (id: string) => {
 
-    return (fn: DataHandler, argsMatcher: ArgsMatcher = () => true) => {
+    return (fn: DataHandlerReactCallback, argsMatcher: ArgsMatcher = () => true) => {
 
         if (!apps || !apps[id]) return
 
@@ -126,7 +126,6 @@ export const useAddUserEffectFn = (id: string) => {
             apps[id].userEffects.push(fn)
             argsMatchers.set(fn, argsMatcher)
         }
-
     }
 }
 
