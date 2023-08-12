@@ -1,6 +1,12 @@
 const fs = require('node:fs')
+
+const packageJson = fs.readFileSync('package.json', 'utf8')
+const { devDependencies, dependencies } = JSON.parse(packageJson)
+
+const externalizeThese = Object.keys({ ...devDependencies, ...dependencies }).includes('react') ? [] : ['react']
+
 require('esbuild').build({
-    external: ['node:repl', 'react'], // react is a peer dependency. 
+    external: ['node:repl'].concat(externalizeThese), // react is a peer dependency. 
     entryPoints: ['./dist/testable/app.js'],
     bundle: true,
     outfile: './public/js/main.js',

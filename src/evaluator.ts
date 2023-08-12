@@ -49,6 +49,7 @@ export const argsMatchers = new Map<DataHandler, ArgsMatcher>
 
 
 const isCallForHelp = (input: string): boolean => {
+
     return input.trim().split(' ').includes('--help') || input.trim().split(' ').includes('-h')
 }
 
@@ -72,6 +73,7 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
             }))
         }
     }
+
     return helpResults
 }
 
@@ -101,10 +103,12 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
 
                 matched.reverse()
                 if (isCallForHelp(input)) {
+
                     const helpResults = getHelpOutput(
                         matched,
                         parsed
                     )
+                    await dataCallback(parsed, helpResults, id)
                     finalCallback(null, helpResults)
                     return
                 }

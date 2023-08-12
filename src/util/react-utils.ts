@@ -2,6 +2,7 @@ import React from 'react'
 import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../index';
 import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
+
 type DataHandlerReactCallback = DataHandler
 
 const createAppIntervals: {
