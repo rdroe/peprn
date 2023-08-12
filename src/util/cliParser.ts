@@ -53,22 +53,24 @@ const getIsModuleName = (modules: Modules) => (str: string): boolean => {
 }
 
 export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[]): ParsedCli => {
-
-    const opts: Opts = { ...rawOpts, ...yargsOptions }
+    let opts: Opts = { ...yargsOptions }
 
     const input: string[] = typeof rawIn === 'string' ? stringArgv(rawIn) : rawIn
+
     let currSubmodules = modules
     let currModuleName = ''
     const ret: ParsedCli = input.reduce((accum: ParsedCli, curr) => {
-
+        const currIsNum = isNumber(curr)
         const isModuleName = getIsModuleName(currSubmodules)
 
         const { temp } = accum
         // intrinsically, does not start with "-"
         if (isModuleName(curr)) {
+
             if (temp.lastCommandReached) throw new Error(`Invariant violated; last command should be surpassed if module names are still being encountered.`)
             if (undefined === currSubmodules[curr]) throw new Error(`Invariant violated; as a module name "${curr}" should be a property name in the current submodules being analyzed.`)
             if (!temp.lastCommandReached) {
+                opts = { ...opts, ...(currSubmodules[curr].yargs ?? {}) }
                 accum.commands.push(curr)
                 currModuleName = `${currModuleName} ${curr}`.trim()
                 currSubmodules = currSubmodules[curr].submodules
@@ -81,27 +83,30 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
 
                 }
             } else throw new Error(`A command /subcommand name cannot be repeated as an option name `)
-        } else if (curr.startsWith('-') && !isNumber(curr)) {
+        } else if (curr.startsWith('-') && !currIsNum) {
 
-            const newCursOptName = curr.replace(/\-/g, '')
-            let newCursOpt: Opt = opts[newCursOptName] || {
-                array: false,
-            }
+            // the "literal" is the one the user actually wrote as the opt name 
+            const newCursOptLiteral = curr.replace(/\-/g, '')
 
-            let newCursAlias = newCursOpt.alias ?? null
-            if (newCursAlias === null) {
-
-                const aliasOwner = Object.entries(opts).find(([ownerNm, ownerOpt]) => {
-                    return ownerOpt.alias === newCursOptName
+            // the entry obtained has a 
+            const newCursOptNameEntry: [name: string, opt: Opt] = opts[newCursOptLiteral]
+                ?
+                // simple case -- user typed the literal. simple lookup.
+                [newCursOptLiteral, opts[newCursOptLiteral]]
+                :
+                // otherwise, find the opt where the literal is the alias
+                Object.entries(opts).find(([, anOption]) => {
+                    return newCursOptLiteral === anOption.alias
                 })
+                ??
+                // if it's not even an alias, use the default.
+                [newCursOptLiteral, { array: false }]
 
-                if (aliasOwner) {
-                    newCursAlias = aliasOwner[0]
-                    newCursOpt = aliasOwner[1]
-                }
+            // the entry we obtain will always have the "actual" option name, i.e. the property in the "yargs" argument.
+            const [newCursOptName, newCursOpt] = newCursOptNameEntry
 
-            }
-
+            // it's cheap to simply re-obtain the alias in cases where user used it.
+            let newCursAlias = newCursOpt.alias ?? null
 
             if (newCursOpt.type === 'bool' || newCursOpt.type === 'boolean') {
                 const ret = {
@@ -122,6 +127,7 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
             }
 
             const newCursNames = newCursAlias ? [newCursOptName, newCursAlias] : [newCursOptName]
+
             return {
                 ...accum,
                 temp: {
@@ -195,10 +201,12 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
             // non-hyphenated thing, also non-module name, and no cursor yet.
             // this is a positional argument
         } else {
+
             const { _: und, positionalNonCommands = [] } = accum
+            const typedCurr = currIsNum ? parseFloat(curr) : curr
             return {
                 ...accum,
-                positionalNonCommands: (positionalNonCommands ?? []).concat([curr]),
+                positionalNonCommands: (positionalNonCommands ?? []).concat([typedCurr]),
                 _: (und ?? []).concat([curr])
             }
         }

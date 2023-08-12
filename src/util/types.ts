@@ -1,9 +1,9 @@
 import { CliApps } from "../evaluator"
 import { ParsedCli } from "./cliParser"
 export type ModuleFn<ArgFormat extends ParsedCli = ParsedCli, Ret = unknown> = (args: ArgFormat, childCalls?: any, appId?: string, appsSingleton?: CliApps) => Promise<Ret>
-export interface Module {
+export interface Module<ArgFormat extends ParsedCli = ParsedCli, Ret = unknown> {
     help?: ModuleHelp
-    fn: ModuleFn
+    fn: ModuleFn<ArgFormat, Ret>
     validate?: (arg: unknown) => boolean
     yargs?: {
         [optName: string]: {

@@ -5,6 +5,7 @@ export * from './util/react-utils'
 export { earlySaveHistory, cleanHistory } from './browser-default-history'
 export const apps: { [id: string]: CliApp } = {}
 
+
 const makeFinalCallback = (id: string, res: Function) => async (err: null | Error, result: any) => {
     // @ts-ignore
     if (err) throw new Error(`Error intercepted; `, err)
