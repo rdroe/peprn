@@ -13,11 +13,11 @@ export interface Module<ArgFormat extends ParsedCli = ParsedCli, Ret = unknown> 
         }
     }
     submodules?: {
-        [subcommand: string]: Module
+        [subcommand: string]: Module<any, any>
     }
 }
 
-export type Modules = Record<string, Module>
+export type Modules<ModuleNames extends string | number | symbol = any> = Record<ModuleNames, Module>
 
 
 export interface ModuleHelp {
