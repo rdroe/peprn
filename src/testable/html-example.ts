@@ -3,7 +3,7 @@ import * as match from "../match"
 import { apps } from "../browser"
 
 createBrowserApp({
-    id: 'cli2', modules: {
+    id: 'cli', modules: {
         match: match.default
     },
     userKeyEffects: [
