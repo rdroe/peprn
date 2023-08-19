@@ -2130,7 +2130,7 @@ __metadata:
     typescript: ^4.9.5
     zod: "npm:3.21.4"
   peerDependencies:
-    react: ^18.2.0
+    react: "*"
   languageName: unknown
   linkType: soft
 

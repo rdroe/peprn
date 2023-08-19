@@ -3,7 +3,7 @@ import * as match from "../match"
 import { apps } from "../browser"
 
 createBrowserApp({
-    id: 'cli', modules: {
+    id: 'cli2', modules: {
         match: match.default
     },
     userKeyEffects: [
@@ -14,10 +14,10 @@ createBrowserApp({
     ],
     dataHandler: async (_, data) => {
 
-        const body = document.querySelector('body') as HTMLBodyElement
+        const div = document.querySelector('.matches') as HTMLBodyElement
 
-        if (body && data !== undefined) {
-            body.innerHTML = `${body.innerHTML}
+        if (div && data !== undefined) {
+            div.innerHTML = `${div.innerHTML}
 <div><pre>${JSON.stringify(data, null, 2)}</pre></div>
 `
         }
