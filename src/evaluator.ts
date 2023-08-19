@@ -15,6 +15,7 @@ export type Opts = {
     init?: (ownId: string, apps: CliApps) => void
     userEffects?: DataHandler[]
     userKeyEffects?: KeyHandler[]
+    useBrowserDefault?: false
     catch?: (err: Error, rawInput: string, parsedCli: ParsedCli | null) => void
 }
 

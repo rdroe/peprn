@@ -13,10 +13,7 @@ const cm: Module = {
 
         [childNamespace: string]: Promise<any>
     }) {
-
-        if (!y) return null
-        const childResults = await Promise.all(Object.values(y))
-        return childResults.flat().length
+        return 
     },
     submodules: {
         scalar // child command
