@@ -48,6 +48,9 @@ const addHistory = async (id: string, val: string) => {
     })
 }
 
+export const historyIgnore = ['history', 'history delete']
+const doIgnore = (cli: string) => historyIgnore.some((ignore) => cli.startsWith(ignore))
+
 export const earlySaveHistory = addHistory
 export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['history']> => {
 
@@ -67,7 +70,7 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
             apps[id].histCursor = apps[id].historyData.length // cursor beyond end
             const val = cleanHistory(apps[id].el.value)
 
-            if (val && val.startsWith('history delete') === false) {
+            if (val && doIgnore(val) === false) {
                 if (apps[id].historyData[apps[id].historyData.length - 1] !== val) {
                     apps[id].historyData[
                         apps[id].histCursor

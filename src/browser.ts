@@ -5,7 +5,7 @@ import { Modules, Module } from './util/types'
 import { conditionallyAddBrowserDefault } from './default-browser-app'
 
 export * from './util/react-utils'
-export { earlySaveHistory, cleanHistory } from './browser-default-history'
+export { earlySaveHistory, cleanHistory, historyIgnore } from './browser-default-history'
 export const apps: { [id: string]: CliApp } = {}
 
 
@@ -28,8 +28,8 @@ const genericDataHandler: DataHandler = async (parsed, data, uniqueAppId) => {
 
 const defaultModules: Modules = {
     hideOutput: {
-        fn: async function () {
-            
+        fn: async function() {
+
             const dataEl = document.querySelector('div.peprn-default-out') as HTMLDivElement
             if (dataEl && dataEl?.style) {
                 dataEl.style.right = '100%'
@@ -47,7 +47,7 @@ const defaultModules: Modules = {
 }
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
     const { id, modules, history, useBrowserDefault } = opts
-    let  combinedModules = { ...modules }
+    let combinedModules = { ...modules }
     if (useBrowserDefault === undefined) {
         combinedModules = {
             ...modules,
