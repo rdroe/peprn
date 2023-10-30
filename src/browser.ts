@@ -5,7 +5,7 @@ import { Modules, Module } from './util/types'
 import { conditionallyAddBrowserDefault } from './default-browser-app'
 
 export * from './util/react-utils'
-export { earlySaveHistory, cleanHistory, historyIgnore } from './browser-default-history'
+export { earlySaveHistory, cleanHistory, historyIgnore, ignoreIfStartingWith } from './browser-default-history'
 export const apps: { [id: string]: CliApp } = {}
 
 

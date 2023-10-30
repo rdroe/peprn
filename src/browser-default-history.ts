@@ -49,7 +49,19 @@ const addHistory = async (id: string, val: string) => {
 }
 
 export const historyIgnore = ['history', 'history delete']
-const doIgnore = (cli: string) => historyIgnore.some((ignore) => cli.startsWith(ignore))
+
+export const ignoreIfStartingWith = (cli: string) => {
+    historyIgnore.push(cli)
+}
+
+const doIgnore = (cli: string) => {
+    const ret = historyIgnore.some((ignore) => cli.startsWith(ignore))
+    // @ts-ignore
+    if (window.DEBUG) {
+        console.log('doIgnore', ret, cli)
+    }
+    return ret
+}
 
 export const earlySaveHistory = addHistory
 export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['history']> => {
