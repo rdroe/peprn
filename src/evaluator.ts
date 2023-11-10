@@ -3,6 +3,14 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
+export const shared: {
+    queue: string[]
+} = {
+    queue: []
+}
+
+
+
 
 export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
 export type KeyHandler = (key: KeyboardEvent, appId: string) => Promise<void>
@@ -17,6 +25,7 @@ export type Opts = {
     userKeyEffects?: KeyHandler[]
     useBrowserDefault?: false
     catch?: (err: Error, rawInput: string, parsedCli: ParsedCli | null) => void
+    multilineDefaults?: boolean
 }
 
 export type ZodStore = {
@@ -81,6 +90,22 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
 export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, dataCallback: DataHandler, finalCallback: CallReturn) => Promise<void> => {
 
     const { modules = { match }, id } = opts
+    // Note: opts.multiLineDefaults is used both here and in browser.ts and node.ts (but not node, yet)
+    if (opts.multilineDefaults) {
+        if (opts.preprocessInput) {
+            opts.preprocessInput = (preprocIn) => {
+                const multilineResult = multilinePreprocessor(preprocIn)
+                if (multilineResult === null) {
+                    return null
+                }
+                return opts.preprocessInput(multilineResult, id, appsSingleton)
+            }
+        } else {
+            opts.preprocessInput = multilinePreprocessor
+        }
+
+    }
+
 
     return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
         let parsed: ParsedCli | null = null
@@ -99,9 +124,7 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
 
             const effects = appsSingleton[id]?.userEffects ?? []
 
-
             if (matched.length) {
-
                 matched.reverse()
                 if (isCallForHelp(input)) {
 
@@ -179,3 +202,30 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
 }
 
 
+
+function multilinePreprocessor(snt: string): string | null {
+
+    if (snt.trim() === '') {
+
+        return null;
+    }
+    if (snt.includes('"')) {
+        throw new Error(`Do not include quotation marks`);
+    }
+    if (snt.includes('\n')) {
+        const sntsSplit = snt.split('\n');
+        const snts = sntsSplit.reduce((accum, curr) => {
+            const trimed = curr.trim();
+            if (!trimed) {
+                return accum;
+            }
+            return [...accum, trimed];
+        }, [] as string[]);
+        const snt1 = snts.shift();
+        shared.queue.push(...snts);
+        const call = `${snt1}`;
+        return call;
+    } else {
+        return snt;
+    }
+}

@@ -1,8 +1,9 @@
 import { makeHistory, history as historyCmd } from './browser-default-history'
-import { makeRunner, CliApp, Opts, EvalInteraction, DataHandler } from './evaluator'
+import { makeRunner, CliApp, Opts, EvalInteraction, DataHandler, shared } from './evaluator'
 
 import { Modules, Module } from './util/types'
 import { conditionallyAddBrowserDefault } from './default-browser-app'
+import { fakeCli } from './util/react-utils'
 
 export * from './util/react-utils'
 export { earlySaveHistory, cleanHistory, historyIgnore, ignoreIfStartingWith } from './browser-default-history'
@@ -45,6 +46,14 @@ const defaultModules: Modules = {
         }
     }
 }
+
+const multilineUserEffect: DataHandler = function multilineUserEffect(_, __, appId) {
+    const shifted = shared.queue.shift()
+    if (shifted) {
+        return fakeCli(shifted, appId)
+    }
+}
+
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
     const { id, modules, history, useBrowserDefault } = opts
     let combinedModules = { ...modules }
@@ -60,6 +69,7 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
         combinedModules.history = combinedModules.history || historyCmd
     }
     const outputSelector = `#${id}-out`
+    const newUes = opts.multilineDefaults ? [multilineUserEffect, ...(opts.userEffects ?? [])] : (opts.userEffects ?? [])
 
     apps[id] = {
         el: document.querySelector(`#${id}`),
@@ -68,7 +78,7 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
         zodStore: {},
         dataHandler: opts.dataHandler ? opts.dataHandler : genericDataHandler,
         restarter: null,
-        userEffects: opts.userEffects ?? [],
+        userEffects: newUes,
         userKeyEffects: opts.userKeyEffects ?? []
     }
 
