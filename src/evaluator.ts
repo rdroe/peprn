@@ -87,7 +87,14 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
     return helpResults
 }
 
-export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, dataCallback: DataHandler, finalCallback: CallReturn) => Promise<void> => {
+export const makeRunner = (
+    opts: Opts,
+    appsSingleton: CliApps
+): (
+    input: string,
+    dataCallback: DataHandler,
+    finalCallback: CallReturn
+) => Promise<void> /* end type definition for makeRunner return*/ => { // begin actual function definition
 
     const { modules = { match }, id } = opts
     // Note: opts.multiLineDefaults is used both here and in browser.ts and node.ts (but not node, yet)
@@ -143,28 +150,45 @@ export const makeRunner = (opts: Opts, appsSingleton: CliApps): (input: string, 
                 let n = 0
 
                 const successiveCalls: { [modName: string]: Promise<unknown> } = {}
+                let resolveAllCalled: () => void = () => { }
+                let allCalledProm: Promise<void> = new Promise((res) => {
+                    resolveAllCalled = res
+                })
                 do {
                     const o = n
                     const moduleName = modNames[o]
+
+                    // call all fns
                     successiveCalls[moduleName] = (
-                        (async () => {
+                        (async function peprnModuleLoop() {
 
-                            const results = await matched[o].fn.call(null, parsed, successiveCalls, id, appsSingleton)
+                            await allCalledProm // wait for all promises to be initialized before actually calling any functions on modules
 
-                            const callbackResults = await dataCallback(parsed, results, id)
 
-                            await Promise.all(effects.map((fn1) => {
-                                const matcher = argsMatchers.get(fn1) ?? null
-                                if (matcher === null || matcher(parsed)) {
-                                    return fn1(parsed, results, id)
-                                }
-                            }
-                            ))
-                            return callbackResults
-                        })()
+                            const resultProm = matched[o].fn(parsed, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
+                                dataCallback(parsed, resolved, id)
+                                effects.forEach((fn1) => {
+                                    const matcher = argsMatchers.get(fn1) ?? null
+                                    if (matcher === null || matcher(parsed)) {
+                                        fn1(parsed, resolved, id)
+                                    }
+                                })
+
+
+                                return resolved
+                            })
+
+
+
+
+
+                            return resultProm
+                        })() //auto-call peprnModuleLoop as soon as it's defined
                     )
                     n += 1
                 } while (!!matched[n])
+                // end call all fns
+                resolveAllCalled()
 
                 const allData = await awaitAll(successiveCalls)
                 if (finalCallback) { finalCallback(null, allData) }
