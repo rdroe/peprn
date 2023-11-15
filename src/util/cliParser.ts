@@ -72,17 +72,20 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
         if (isModuleName(curr) === true || isModuleName(curr) === 'DOLLAR_MATCH') {
             const isDollarMatch = isModuleName(curr) === 'DOLLAR_MATCH'
             if (temp.lastCommandReached) throw new Error(`Invariant violated; last command should be surpassed if module names are still being encountered.`)
-            if (undefined === currSubmodules[curr]) throw new Error(`Invariant violated; as a module name "${curr}" should be a property name in the current submodules being analyzed.`)
+            if (undefined === currSubmodules[curr] && Object.keys(currSubmodules).includes('$') === false) throw new Error(`Invariant violated; as a module name "${curr}" should be a property name in the current submodules being analyzed.`)
             if (!temp.lastCommandReached) {
-                opts = { ...opts, ...(currSubmodules[curr].yargs ?? {}) }
-                if (isDollarMatch) {
 
+                if (isDollarMatch) {
+                    opts = { ...opts, ...(currSubmodules['$'].yargs ?? {}) }
                     const dollars = accum["$"] ?? []
                     if (!Array.isArray(dollars)) throw new Error(`Invariant violated; dollars should be an array any time it is defined`)
                     dollars.push(curr)
                     accum["$"] = dollars
 
+                } else {
+                    opts = { ...opts, ...(currSubmodules[curr].yargs ?? {}) }
                 }
+
                 opts = { ...opts, }
                 accum.commands.push(curr)
                 if (isDollarMatch) {
@@ -248,19 +251,26 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
 export const getMatchingModules = (moduleObj: Modules | null) => (str: string): Module[] => {
 
     if (!moduleObj) return
-
     const asArgs = stringArgv(str)
-
     let modulesAndSubmodules: Module[] = []
     let curs: string | number | undefined = asArgs.shift()
     let currSubmodules = moduleObj
-    while (curs && currSubmodules[curs]) {
-        const foundModule = currSubmodules[curs] ?? null
+    while (curs && (currSubmodules[curs] || currSubmodules['$'])) {
+        const isDollarMatch = !!currSubmodules['$']
+        let foundModule: Module | null = null
+        if (isDollarMatch) {
+            foundModule = currSubmodules['$'] ?? null
+
+        } else {
+            foundModule = currSubmodules[curs] ?? null
+        }
+
         if (foundModule) {
             modulesAndSubmodules.push(foundModule)
         }
         currSubmodules = foundModule && foundModule.submodules ? foundModule.submodules : {}
         curs = asArgs.shift()
+
     }
     return modulesAndSubmodules
 }

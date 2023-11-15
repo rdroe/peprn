@@ -1,10 +1,12 @@
 import { createBrowserApp } from '../'
 import * as match from "../match"
 import { apps } from "../browser"
-
+import { foo } from './foo'
 createBrowserApp({
     id: 'cli', modules: {
-        match: match.default
+        match: match.default,
+        foo
+
     },
     userKeyEffects: [
         async (key, ownId) => {
