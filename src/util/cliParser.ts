@@ -46,10 +46,14 @@ export type ParsedCli = {
 
 }
 
-const getIsModuleName = (modules: Modules) => (str: string): boolean => {
+const getIsModuleName = (modules: Modules) => (str: string): boolean | 'DOLLAR_MATCH' => {
     if (!modules) return false
 
-    return !!Object.keys(modules).includes(str)
+    const naturalMatch = !!Object.keys(modules).includes(str)
+    if (naturalMatch) return true
+    const dollarMatch = !!Object.keys(modules).includes(`$`)
+    if (dollarMatch) return 'DOLLAR_MATCH'
+    return false
 }
 
 export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[]): ParsedCli => {
@@ -65,22 +69,35 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
 
         const { temp } = accum
         // intrinsically, does not start with "-"
-        if (isModuleName(curr)) {
-
+        if (isModuleName(curr) === true || isModuleName(curr) === 'DOLLAR_MATCH') {
+            const isDollarMatch = isModuleName(curr) === 'DOLLAR_MATCH'
             if (temp.lastCommandReached) throw new Error(`Invariant violated; last command should be surpassed if module names are still being encountered.`)
             if (undefined === currSubmodules[curr]) throw new Error(`Invariant violated; as a module name "${curr}" should be a property name in the current submodules being analyzed.`)
             if (!temp.lastCommandReached) {
                 opts = { ...opts, ...(currSubmodules[curr].yargs ?? {}) }
+                if (isDollarMatch) {
+
+                    const dollars = accum["$"] ?? []
+                    if (!Array.isArray(dollars)) throw new Error(`Invariant violated; dollars should be an array any time it is defined`)
+                    dollars.push(curr)
+                    accum["$"] = dollars
+
+                }
+                opts = { ...opts, }
                 accum.commands.push(curr)
-                currModuleName = `${currModuleName} ${curr}`.trim()
-                currSubmodules = currSubmodules[curr].submodules
+                if (isDollarMatch) {
+                    currModuleName = `${currModuleName} $`.trim()
+                    currSubmodules = currSubmodules['$'].submodules
+                } else {
+                    currModuleName = `${currModuleName} ${curr}`.trim()
+                    currSubmodules = currSubmodules[curr].submodules
+                }
                 const und = accum['_'] ?? []
                 const uInGood = und.concat([curr])
                 accum.moduleNames.push(currModuleName)
                 return {
                     ...accum,
                     _: uInGood
-
                 }
             } else throw new Error(`A command /subcommand name cannot be repeated as an option name `)
         } else if (curr.startsWith('-') && !currIsNum) {
@@ -231,7 +248,9 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
 export const getMatchingModules = (moduleObj: Modules | null) => (str: string): Module[] => {
 
     if (!moduleObj) return
+
     const asArgs = stringArgv(str)
+
     let modulesAndSubmodules: Module[] = []
     let curs: string | number | undefined = asArgs.shift()
     let currSubmodules = moduleObj
