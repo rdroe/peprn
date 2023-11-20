@@ -145,6 +145,7 @@ export const makeRunner = (
                     finalCallback(null, helpResults)
                     return
                 }
+
                 const modNames = [...parsed.moduleNames]
 
                 modNames.reverse()
@@ -170,6 +171,7 @@ export const makeRunner = (
 
 
                             const resultProm = matched[o].fn(parsed, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
+
                                 if (!appsSingleton[id].dataWait) {
                                     appsSingleton[id].dataWait = {}
                                 }
@@ -180,6 +182,7 @@ export const makeRunner = (
 
 
                                 }
+
                                 dataCallback(parsed, resolved, id)
                                 effects.forEach((fn1) => {
                                     const matcher = argsMatchers.get(fn1) ?? null
