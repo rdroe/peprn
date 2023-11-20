@@ -14,7 +14,6 @@ const cm: Module<ParsedCli & { l: Matchables, r: Matchables }> = {
         }
     },
     fn: async function scalarMatch(argv: { l: Matchables, r: Matchables }) {
-
         const { l, r: right } = argv
 
         return l.map((ll, idx) => {

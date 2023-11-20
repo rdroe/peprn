@@ -2,6 +2,7 @@ import React from 'react'
 import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../index';
 import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
+import awaitAll from './awaitAll';
 
 type DataHandlerReactCallback = DataHandler
 
@@ -24,9 +25,22 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
     textArea.dispatchEvent(
         new KeyboardEvent('keyup', { code: 'Enter', key: 'Enter' }),
     );
-    const result = await apps[appId].restarter;
 
-    return result;
+    await apps[appId].restarter
+    const rawIn = rawInput.replace(/\s\s+/g, ' ').trim()
+    if (apps[appId].dataWait[rawIn]) {
+        const calls = await apps[appId].dataWait[rawIn]
+
+        const keys = Object.keys(calls)
+        let longest = keys.reduce((accum, key) => {
+            return key.length > accum.length ? key : accum
+        }, '')
+        return calls[longest]
+    }
+
+    return apps[appId].restarter;
+
+
 };
 
 export const useFakeCli = () => {

@@ -3,6 +3,7 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
+
 export const shared: {
     queue: string[]
 } = {
@@ -47,6 +48,7 @@ export type CliApp = {
     histCursor?: number
     userEffects: DataHandler[]
     userKeyEffects: KeyHandler[]
+    dataWait?: { [serial: string]: Promise<any> }
 }
 
 export type CliApps = { [id: string]: CliApp }
@@ -154,6 +156,8 @@ export const makeRunner = (
                 let allCalledProm: Promise<void> = new Promise((res) => {
                     resolveAllCalled = res
                 })
+
+
                 do {
                     const o = n
                     const moduleName = modNames[o]
@@ -166,6 +170,16 @@ export const makeRunner = (
 
 
                             const resultProm = matched[o].fn(parsed, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
+                                if (!appsSingleton[id].dataWait) {
+                                    appsSingleton[id].dataWait = {}
+                                }
+
+                                if (parsed.rawIn) {
+
+                                    appsSingleton[id].dataWait[parsed.rawIn.toString()] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
+
+
+                                }
                                 dataCallback(parsed, resolved, id)
                                 effects.forEach((fn1) => {
                                     const matcher = argsMatchers.get(fn1) ?? null
@@ -179,18 +193,18 @@ export const makeRunner = (
                             })
 
 
-
-
-
                             return resultProm
                         })() //auto-call peprnModuleLoop as soon as it's defined
                     )
                     n += 1
                 } while (!!matched[n])
+
                 // end call all fns
                 resolveAllCalled()
 
                 const allData = await awaitAll(successiveCalls)
+
+
                 if (finalCallback) { finalCallback(null, allData) }
 
             } else {

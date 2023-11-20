@@ -43,6 +43,7 @@ export type ParsedCli = {
     temp?: any
     moduleNames: string[]
     [optName: string]: ParsedArg
+    rawIn: string | string[]
 
 }
 
@@ -220,7 +221,8 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
         temp: {
             lastCommandReached: false,
             cursor: null as null | [string[], Opt]
-        }
+        },
+        rawIn: typeof rawIn === 'string' ? rawIn.replace(/\s\s+/, ' ').trim() : rawIn
 
     } as ParsedCli)
 
