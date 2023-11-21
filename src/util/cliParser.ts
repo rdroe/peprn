@@ -70,13 +70,14 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
 
         const { temp } = accum
         // intrinsically, does not start with "-"
-        if (isModuleName(curr) === true || isModuleName(curr) === 'DOLLAR_MATCH') {
-            const isDollarMatch = isModuleName(curr) === 'DOLLAR_MATCH'
+        const isMatch = isModuleName(curr)
+        if (isMatch === true || isMatch === 'DOLLAR_MATCH') {
+
             if (temp.lastCommandReached) throw new Error(`Invariant violated; last command should be surpassed if module names are still being encountered.`)
             if (undefined === currSubmodules[curr] && Object.keys(currSubmodules).includes('$') === false) throw new Error(`Invariant violated; as a module name "${curr}" should be a property name in the current submodules being analyzed.`)
             if (!temp.lastCommandReached) {
 
-                if (isDollarMatch) {
+                if (isMatch === 'DOLLAR_MATCH') {
                     opts = { ...opts, ...(currSubmodules['$'].yargs ?? {}) }
                     const dollars = accum["$"] ?? []
                     if (!Array.isArray(dollars)) throw new Error(`Invariant violated; dollars should be an array any time it is defined`)
@@ -89,7 +90,7 @@ export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[])
 
                 opts = { ...opts, }
                 accum.commands.push(curr)
-                if (isDollarMatch) {
+                if (isMatch === 'DOLLAR_MATCH') {
                     currModuleName = `${currModuleName} $`.trim()
                     currSubmodules = currSubmodules['$'].submodules
                 } else {
@@ -258,7 +259,8 @@ export const getMatchingModules = (moduleObj: Modules | null) => (str: string): 
     let curs: string | number | undefined = asArgs.shift()
     let currSubmodules = moduleObj
     while (curs && (currSubmodules[curs] || currSubmodules['$'])) {
-        const isDollarMatch = !!currSubmodules['$']
+
+        const isDollarMatch = !!currSubmodules['$'] && !currSubmodules[curs]
         let foundModule: Module | null = null
         if (isDollarMatch) {
             foundModule = currSubmodules['$'] ?? null

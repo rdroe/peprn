@@ -4,6 +4,11 @@ export const foo: Module = {
         return 'foo'
     },
     submodules: {
+        'job': {
+            fn: async () => {
+                return "i should run"
+            }
+        },
         '$': {
             fn: async (parsedCli) => {
                 return `foo.$ ; subcommand args: ${parsedCli["$"]}`
