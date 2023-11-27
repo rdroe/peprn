@@ -21,14 +21,6 @@ createBrowserApp({
         const isAutomated = parsedCli['peprn:automated']
         const isChildmost = parsedCli['peprn:childmost']
         const dataEl = apps[appId].dataEl
-        console.log('peprn', {
-            isAutomated,
-            isChildmost,
-            dataEl,
-            data,
-            parsedCli
-        })
-
         if (!isAutomated && isChildmost) {
             if (dataEl) {
                 dataEl.innerHTML = `
