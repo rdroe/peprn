@@ -3,6 +3,7 @@ import * as match from "../match"
 import { apps } from "../browser"
 import { foo } from './foo'
 import { cliTest } from "./cliTest"
+import { ParsedCli } from '../util'
 createBrowserApp({
     id: 'cli', modules: {
         match: match.default, cliTest, foo
@@ -13,7 +14,34 @@ createBrowserApp({
             localStorage.setItem('match:initial', currCmd)
         }
     ],
+    catch: (e) => {
+        console.error(`Caught ${e.message}`)
+    },
+    dataHandler: async (parsedCli: ParsedCli, data: any, appId: string) => {
+        const isAutomated = parsedCli['peprn:automated']
+        const isChildmost = parsedCli['peprn:childmost']
+        const dataEl = apps[appId].dataEl
+        console.log('peprn', {
+            isAutomated,
+            isChildmost,
+            dataEl,
+            data,
+            parsedCli
+        })
+
+        if (!isAutomated && isChildmost) {
+            if (dataEl) {
+                dataEl.innerHTML = `
+${JSON.stringify(data, null, 2)}
+${dataEl.innerHTML}
+`
+            } else {
+                console.warn(`Could not find html data container for peprn app "${appId}"`)
+            }
+        }
+    },
     init: (ownId) => {
+
         apps[ownId].el.value = localStorage.getItem('match:initial') || ''
     }
 })

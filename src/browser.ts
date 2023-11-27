@@ -1,7 +1,7 @@
 import { makeHistory, history as historyCmd } from './browser-default-history'
 import { makeRunner, CliApp, Opts, EvalInteraction, DataHandler, shared } from './evaluator'
 
-import { Modules, Module } from './util/types'
+import { Modules, } from './util/types'
 import { conditionallyAddBrowserDefault } from './default-browser-app'
 import { fakeCli } from './util/react-utils'
 
@@ -54,6 +54,7 @@ const multilineUserEffect: DataHandler = function multilineUserEffect(_, __, app
     }
 }
 
+
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
     const { id, modules, history, useBrowserDefault } = opts
     let combinedModules = { ...modules }
@@ -79,7 +80,8 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
         dataHandler: opts.dataHandler ? opts.dataHandler : genericDataHandler,
         restarter: null,
         userEffects: newUes,
-        userKeyEffects: opts.userKeyEffects ?? []
+        userKeyEffects: opts.userKeyEffects ?? [],
+        rememberAutomated: opts.rememberAutomated ?? false
     }
 
     if (useBrowserDefault || useBrowserDefault === undefined) { conditionallyAddBrowserDefault(id, apps) }

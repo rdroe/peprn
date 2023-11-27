@@ -10,9 +10,6 @@ export const shared: {
     queue: []
 }
 
-
-
-
 export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
 export type KeyHandler = (key: KeyboardEvent, appId: string) => Promise<void>
 export type Opts = {
@@ -27,6 +24,7 @@ export type Opts = {
     useBrowserDefault?: false
     catch?: (err: Error, rawInput: string, parsedCli: ParsedCli | null) => void
     multilineDefaults?: boolean
+    rememberAutomated?: boolean
 }
 
 export type ZodStore = {
@@ -49,6 +47,7 @@ export type CliApp = {
     userEffects: DataHandler[]
     userKeyEffects: KeyHandler[]
     dataWait?: { [serial: string]: Promise<any> }
+    rememberAutomated: boolean
 }
 
 export type CliApps = { [id: string]: CliApp }
@@ -57,8 +56,6 @@ export type EvalInteraction = 'called' | 'not-called'
 export type CallReturn = (err: null | Error, success: any) => void
 export type ArgsMatcher = (parsedCli: ParsedCli) => boolean
 export const argsMatchers = new Map<DataHandler, ArgsMatcher>
-
-
 
 const isCallForHelp = (input: string): boolean => {
 
@@ -141,6 +138,7 @@ export const makeRunner = (
                         matched,
                         parsed
                     )
+
                     await dataCallback(parsed, helpResults, id)
                     finalCallback(null, helpResults)
                     return
@@ -158,8 +156,8 @@ export const makeRunner = (
                     resolveAllCalled = res
                 })
 
-
                 do {
+
                     const o = n
                     const moduleName = modNames[o]
 
@@ -169,8 +167,10 @@ export const makeRunner = (
 
                             await allCalledProm // wait for all promises to be initialized before actually calling any functions on modules
 
-
-                            const resultProm = matched[o].fn(parsed, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
+                            const resultProm = matched[o].fn(o === 0 ? {
+                                ...parsed,
+                                'peprn:childmost': true
+                            } : parsed, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
 
                                 if (!appsSingleton[id].dataWait) {
                                     appsSingleton[id].dataWait = {}
@@ -178,24 +178,23 @@ export const makeRunner = (
 
                                 if (parsed.rawIn) {
 
-                                    appsSingleton[id].dataWait[parsed.rawIn.toString()] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
+                                    appsSingleton[id].dataWait[parsed.rawIn.toString().replace(" --peprn:automated true", '')] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
 
 
                                 }
 
-                                dataCallback(parsed, resolved, id)
+                                dataCallback(o === 0 ? {
+                                    ...parsed,
+                                    'peprn:childmost': true
+                                } : parsed, resolved, id)
                                 effects.forEach((fn1) => {
                                     const matcher = argsMatchers.get(fn1) ?? null
                                     if (matcher === null || matcher(parsed)) {
                                         fn1(parsed, resolved, id)
                                     }
                                 })
-
-
                                 return resolved
                             })
-
-
                             return resultProm
                         })() //auto-call peprnModuleLoop as soon as it's defined
                     )
@@ -212,7 +211,9 @@ export const makeRunner = (
 
             } else {
                 finalCallback(null, null)
+
             }
+
 
 
         } catch (e: unknown) {

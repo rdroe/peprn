@@ -2,15 +2,12 @@ import { apps, fakeCli } from "../browser";
 import { Module } from "../util";
 
 export const cliTest: Module = {
-    fn: async () => {
-
-    },
+    fn: async () => { },
     submodules: {
         one: {
             fn: async () => {
-
                 const fromTwo = await fakeCli(`cliTest two`, 'cli')
-                console.log('dataWait', apps.dataWait)
+                console.log(' completed prom in fakeCli > one')
                 return { one: fromTwo }
             }
         },

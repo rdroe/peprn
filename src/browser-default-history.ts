@@ -63,7 +63,19 @@ const doIgnore = (cli: string) => {
     return ret
 }
 
-export const earlySaveHistory = addHistory
+export const earlySaveHistory = async (apps: CliApps, id: string, val: string) => {
+
+    const inclusible = !val.includes('--peprn:automated true')
+    if (val && doIgnore(val) === false) {
+        if (inclusible || apps[id].rememberAutomated) {
+            if (apps[id].historyData[apps[id].historyData.length - 1] !== val) {
+                apps[id].historyData.push(val)
+                apps[id].histCursor = apps[id].historyData.length
+                addHistory(id, val)
+            }
+        }
+    }
+}
 export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['history']> => {
 
     if (!apps[id].historyData) {
@@ -82,22 +94,28 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
             apps[id].histCursor = apps[id].historyData.length // cursor beyond end
             const val = cleanHistory(apps[id].el.value)
 
-            if (val && doIgnore(val) === false) {
-                if (apps[id].historyData[apps[id].historyData.length - 1] !== val) {
-                    apps[id].historyData[
-                        apps[id].histCursor
-                    ] = val
-                    apps[id].histCursor = apps[id].historyData.length
+            earlySaveHistory(apps, id, val)
 
-                    addHistory(id, val)
+        } else if (key.key === 'ArrowDown' && key.altKey) {
+
+            let did = false
+
+            if (typeof apps[id].historyData[apps[id].histCursor + 1] === 'string') {
+                did = true
+                apps[id].histCursor += 1
+                apps[id].el.value = apps[id].historyData[apps[id].histCursor]
+
+            } else if (typeof apps[id].historyData[apps[id].histCursor + 1] === 'undefined') {
+
+                // if on last item
+                if (typeof apps[id].historyData[apps[id].histCursor] === 'string') {
+                    did = true
+                    apps[id].histCursor += 1
+                    apps[id].el.value = ''
                 }
             }
 
-        } else if (key.key === 'ArrowDown' && key.altKey) {
-            if (typeof apps[id].historyData[apps[id].histCursor + 1] === 'string') {
-                apps[id].histCursor += 1
-                apps[id].el.value = apps[id].historyData[apps[id].histCursor]
-            }
+
         } else if (key.key === 'ArrowUp' && key.altKey) {
             if (undefined !== apps[id].historyData[apps[id].histCursor - 1]) {
                 apps[id].histCursor -= 1
