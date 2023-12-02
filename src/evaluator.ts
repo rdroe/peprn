@@ -3,12 +3,56 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
+import { apps } from './node'
+
+
 
 export const shared: {
     queue: string[]
 } = {
     queue: []
 }
+export const cleanHistory = (cli?: string) => cli?.replace(/[\n\s]+$/g, '') ?? ""
+
+export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
+
+    // const textArea = apps[appId].el;
+    // const evaluator = apps[appId].evaluator
+    /*    if (!textArea) {
+            throw new Error(`Could not find "${appId}" app textarea`);
+        }
+    */
+    const storableHist = cleanHistory(rawInput)
+    if (storableHist) {
+        //        await earlySaveHistory(appId, storableHist)
+    }
+    //    textArea.value = rawInput;
+
+    //  textArea.dispatchEvent(
+    //    new KeyboardEvent('keyup', { code: 'Enter', key: 'Enter' }),
+    //  );
+    console.log("CALLING", { rawInput, appId })
+    const prom = await apps[appId].evaluator(rawInput, apps[appId].dataHandler, () => { })
+
+    if (apps[appId].restarter) { await apps[appId].restarter }
+
+    const rawIn = rawInput.replace(/\s\s+/g, ' ').trim()
+    console.log('after CALLING dataWait', { dataWait: apps[appId].dataWait })
+    if (apps[appId].dataWait && apps[appId].dataWait[rawIn]) {
+
+        const calls = await apps[appId].dataWait[rawIn]
+
+        const keys = Object.keys(calls)
+        let longest = keys.reduce((accum, key) => {
+            return key.length > accum.length ? key : accum
+        }, '')
+        return calls[longest]
+    }
+
+    return apps[appId].restarter ?? prom
+
+
+};
 
 
 
@@ -96,7 +140,7 @@ export const makeRunner = (
     input: string,
     dataCallback: DataHandler,
     finalCallback: CallReturn
-) => Promise<void> /* end type definition for makeRunner return*/ => { // begin actual function definition
+) => Promise<any> /* end type definition for makeRunner return*/ => { // begin actual function definition
 
     const { modules = { match }, id } = opts
     // Note: opts.multiLineDefaults is used both here and in browser.ts and node.ts (but not node, yet)
@@ -116,7 +160,7 @@ export const makeRunner = (
     }
 
 
-    return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
+    return (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
         let parsed: ParsedCli | null = null
 
 
@@ -141,8 +185,9 @@ export const makeRunner = (
                         matched,
                         parsed
                     )
-                    await dataCallback(parsed, helpResults, id)
-                    finalCallback(null, helpResults)
+                    dataCallback(parsed, helpResults, id).then(() => {
+                        finalCallback(null, helpResults)
+                    })
                     return
                 }
 
@@ -177,7 +222,7 @@ export const makeRunner = (
                                 }
 
                                 if (parsed.rawIn) {
-
+                                    console.log('in module caller; setting dataWait', { awaitAll: awaitAll(successiveCalls) })
                                     appsSingleton[id].dataWait[parsed.rawIn.toString()] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
 
 
@@ -205,11 +250,10 @@ export const makeRunner = (
                 // end call all fns
                 resolveAllCalled()
 
-                const allData = await awaitAll(successiveCalls)
-
-
-                if (finalCallback) { finalCallback(null, allData) }
-
+                const allData = awaitAll(successiveCalls).then((ad) => {
+                    if (finalCallback) { return finalCallback(null, ad) }
+                })
+                return allData
             } else {
                 finalCallback(null, null)
             }

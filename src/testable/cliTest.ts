@@ -1,6 +1,6 @@
-import { apps, fakeCli } from "../browser";
+import { fakeCli } from "../evaluator";
 import { Module } from "../util";
-
+import { apps } from "../node";
 export const cliTest: Module = {
     fn: async () => {
 
@@ -10,7 +10,7 @@ export const cliTest: Module = {
             fn: async () => {
 
                 const fromTwo = await fakeCli(`cliTest two`, 'cli')
-                console.log('dataWait', apps.dataWait)
+                console.log('got fromTwo', fromTwo)
                 return { one: fromTwo }
             }
         },

@@ -20,7 +20,12 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
     if (isNode()) {
         if (opts.userKeyEffects) {
             console.warn('"userKeyEffects" is not yet implemented for node platform')
+
+            process.on('unhandledRejection', console.log);
         }
+
+        const sourceMapSupport = await (new Function(`return import('source-map-support');`)() as Promise<{ install: any }>);
+        sourceMapSupport.install();
 
         const xProm = (new Function(`return import('node:repl')`)()) as Promise<{
             default: {
@@ -41,7 +46,7 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
 
         repl.start({
             prompt: '> ',
-            eval: async (input, _, __, cb) => {
+            eval: (input, _, __, cb) => {
                 apps[id].evaluator(input, genericDataHandler, cb)
             }
         })

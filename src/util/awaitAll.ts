@@ -30,7 +30,7 @@ export default async function awaitAll<T = any>(allProperties: {
     })
 
     const completions = await Promise.all(vals)
-
+    console.log('completions in awaitAll', completions)
     const cb = (accum: T, prop: any, idx: number) => {
         return { ...accum, [prop]: completions[idx] }
     }
