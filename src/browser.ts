@@ -4,7 +4,6 @@ import { makeRunner, CliApp, Opts, EvalInteraction, DataHandler, shared } from '
 import { Modules, Module } from './util/types'
 import { conditionallyAddBrowserDefault } from './default-browser-app'
 import { fakeCli } from './util/react-utils'
-
 export * from './util/react-utils'
 export { earlySaveHistory, cleanHistory, historyIgnore, ignoreIfStartingWith } from './browser-default-history'
 export const apps: { [id: string]: CliApp } = {}

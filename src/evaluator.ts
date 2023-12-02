@@ -3,9 +3,7 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
-import { apps } from './node'
-
-
+import { isNode } from './util'
 
 export const shared: {
     queue: string[]
@@ -13,31 +11,14 @@ export const shared: {
     queue: []
 }
 export const cleanHistory = (cli?: string) => cli?.replace(/[\n\s]+$/g, '') ?? ""
-
+let apps: CliApps | null = null
 export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
-
-    // const textArea = apps[appId].el;
-    // const evaluator = apps[appId].evaluator
-    /*    if (!textArea) {
-            throw new Error(`Could not find "${appId}" app textarea`);
-        }
-    */
+    if (!apps) return
     const storableHist = cleanHistory(rawInput)
-    if (storableHist) {
-        //        await earlySaveHistory(appId, storableHist)
-    }
-    //    textArea.value = rawInput;
-
-    //  textArea.dispatchEvent(
-    //    new KeyboardEvent('keyup', { code: 'Enter', key: 'Enter' }),
-    //  );
-    console.log("CALLING", { rawInput, appId })
     const prom = await apps[appId].evaluator(rawInput, apps[appId].dataHandler, () => { })
 
-    if (apps[appId].restarter) { await apps[appId].restarter }
-
     const rawIn = rawInput.replace(/\s\s+/g, ' ').trim()
-    console.log('after CALLING dataWait', { dataWait: apps[appId].dataWait })
+
     if (apps[appId].dataWait && apps[appId].dataWait[rawIn]) {
 
         const calls = await apps[appId].dataWait[rawIn]
@@ -49,7 +30,7 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
         return calls[longest]
     }
 
-    return apps[appId].restarter ?? prom
+    return prom
 
 
 };
@@ -141,7 +122,7 @@ export const makeRunner = (
     dataCallback: DataHandler,
     finalCallback: CallReturn
 ) => Promise<any> /* end type definition for makeRunner return*/ => { // begin actual function definition
-
+    apps = appsSingleton
     const { modules = { match }, id } = opts
     // Note: opts.multiLineDefaults is used both here and in browser.ts and node.ts (but not node, yet)
     if (opts.multilineDefaults) {
@@ -160,7 +141,7 @@ export const makeRunner = (
     }
 
 
-    return (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
+    return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
         let parsed: ParsedCli | null = null
 
 
@@ -222,7 +203,7 @@ export const makeRunner = (
                                 }
 
                                 if (parsed.rawIn) {
-                                    console.log('in module caller; setting dataWait', { awaitAll: awaitAll(successiveCalls) })
+
                                     appsSingleton[id].dataWait[parsed.rawIn.toString()] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
 
 
@@ -253,6 +234,10 @@ export const makeRunner = (
                 const allData = awaitAll(successiveCalls).then((ad) => {
                     if (finalCallback) { return finalCallback(null, ad) }
                 })
+
+                if (!isNode()) {
+                    await allData
+                }
                 return allData
             } else {
                 finalCallback(null, null)
