@@ -1,4 +1,4 @@
-import { fakeCli } from "../evaluator";
+import fakeCli from "../fakeCli";
 import { Module } from "../util";
 
 export const cliTest: Module = {

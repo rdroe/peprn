@@ -10,8 +10,11 @@ export const shared: {
 } = {
     queue: []
 }
+
 export const cleanHistory = (cli?: string) => cli?.replace(/[\n\s]+$/g, '') ?? ""
+
 let apps: CliApps | null = null
+
 export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
     if (!apps) return
 

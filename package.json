@@ -38,7 +38,8 @@
     "./util": "./dist/util/index.js",
     "./browser": "./dist/browser.js",
     "./node": "./dist/node.js",
-    "./match": "./dist/match/index.js"
+    "./match": "./dist/match/index.js",
+    "./fakeCli": "./dist/fakeCli.js"  
   },
   "main": "nyargs",
   "engines": {
@@ -65,6 +66,9 @@
       ],
       "node": [
         "dist/node"
+      ],
+      "fakeCli": [
+        "dist/fakeCli.d.ts"
       ]
     }
   },
