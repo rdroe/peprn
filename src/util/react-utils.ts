@@ -2,7 +2,7 @@ import React from 'react'
 import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../index';
 import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
-import awaitAll from './awaitAll';
+
 
 type DataHandlerReactCallback = DataHandler
 
@@ -17,21 +17,25 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
         throw new Error(`Could not find "${appId}" app textarea`);
     }
     const storableHist = cleanHistory(textArea.value)
+
     if (storableHist) {
-        await earlySaveHistory(appId, storableHist)
+        await earlySaveHistory(apps, appId, storableHist,)
     }
-    textArea.value = rawInput;
+
+    textArea.value = `${rawInput} --peprn:automated true`;
 
     textArea.dispatchEvent(
         new KeyboardEvent('keyup', { code: 'Enter', key: 'Enter' }),
     );
-
     await apps[appId].restarter
+
+
     const rawIn = rawInput.replace(/\s\s+/g, ' ').trim()
     if (apps[appId].dataWait[rawIn]) {
         const calls = await apps[appId].dataWait[rawIn]
 
         const keys = Object.keys(calls)
+
         let longest = keys.reduce((accum, key) => {
             return key.length > accum.length ? key : accum
         }, '')

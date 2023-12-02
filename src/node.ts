@@ -39,7 +39,8 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
             zodStore: {},
             dataHandler: opts.dataHandler ?? genericDataHandler,
             userEffects: opts.userEffects ?? [],
-            userKeyEffects: []
+            userKeyEffects: [],
+            rememberAutomated: true
         }
 
         const { default: repl } = await xProm

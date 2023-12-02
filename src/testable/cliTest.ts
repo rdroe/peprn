@@ -1,16 +1,13 @@
 import { fakeCli } from "../evaluator";
 import { Module } from "../util";
 
-
 export const cliTest: Module = {
-    fn: async () => {
-
-    },
+    fn: async () => { },
     submodules: {
         one: {
             fn: async () => {
-
                 const fromTwo = await fakeCli(`cliTest two`, 'cli')
+
                 return { one: fromTwo }
             }
         },
