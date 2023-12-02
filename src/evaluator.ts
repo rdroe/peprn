@@ -14,7 +14,7 @@ export const cleanHistory = (cli?: string) => cli?.replace(/[\n\s]+$/g, '') ?? "
 let apps: CliApps | null = null
 export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
     if (!apps) return
-    const storableHist = cleanHistory(rawInput)
+
     const prom = await apps[appId].evaluator(rawInput, apps[appId].dataHandler, () => { })
 
     const rawIn = rawInput.replace(/\s\s+/g, ' ').trim()
@@ -33,7 +33,9 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
     return prom
 
 
+
 };
+
 
 export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
 export type KeyHandler = (key: KeyboardEvent, appId: string) => Promise<void>
