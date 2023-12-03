@@ -3,7 +3,7 @@ import * as match from "../match"
 import { apps } from "../browser"
 import { foo } from './foo'
 import { cliTest } from "./cliTest"
-import { ParsedCli } from '../util'
+import { ParsedCli, PEPRN_AUTO } from '../util'
 createBrowserApp({
     id: 'cli', modules: {
         match: match.default, cliTest, foo
@@ -18,10 +18,12 @@ createBrowserApp({
         console.error(`Caught ${e.message}`)
     },
     dataHandler: async (parsedCli: ParsedCli, data: any, appId: string) => {
-        const isAutomated = parsedCli['peprn:automated']
+
+        const isAutomated = parsedCli[PEPRN_AUTO]
         const isChildmost = parsedCli['peprn:childmost']
         const dataEl = apps[appId].dataEl
         if (!isAutomated && isChildmost) {
+
             if (dataEl) {
                 dataEl.innerHTML = `
 ${JSON.stringify(data, null, 2)}

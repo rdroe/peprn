@@ -2,6 +2,7 @@ import React from 'react'
 import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../index';
 import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
+import { PEPRN_AUTO_TRUE } from '../util';
 
 
 type DataHandlerReactCallback = DataHandler
@@ -19,10 +20,10 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
     const storableHist = cleanHistory(textArea.value)
 
     if (storableHist) {
-        await earlySaveHistory(apps, appId, storableHist,)
+        await earlySaveHistory(apps, appId, storableHist)
     }
 
-    textArea.value = `${rawInput} --peprn:automated true`;
+    textArea.value = `${rawInput} ${PEPRN_AUTO_TRUE}`;
 
     textArea.dispatchEvent(
         new KeyboardEvent('keyup', { code: 'Enter', key: 'Enter' }),

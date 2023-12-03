@@ -3,7 +3,7 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
-import { isNode } from './util'
+import { isNode, PEPRN_AUTO_TRUE, cleanHistory } from './util'
 
 export const shared: {
     queue: string[]
@@ -11,20 +11,18 @@ export const shared: {
     queue: []
 }
 
-export const cleanHistory = (cli?: string) => cli?.replace(/[\n\s]+$/g, '') ?? ""
+
 
 let apps: CliApps | null = null
 
 export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
     if (!apps) return
+    const rawInTrimmed = rawInput.trim()
+    const rawIn = `${rawInput} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
+    const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
 
-    const prom = await apps[appId].evaluator(rawInput, apps[appId].dataHandler, () => { })
-
-    const rawIn = rawInput.replace(/\s\s+/g, ' ').trim()
-
-    if (apps[appId].dataWait && apps[appId].dataWait[rawIn]) {
-
-        const calls = await apps[appId].dataWait[rawIn]
+    if (apps[appId].dataWait && apps[appId].dataWait[rawInTrimmed]) {
+        const calls = await apps[appId].dataWait[rawInTrimmed]
 
         const keys = Object.keys(calls)
         let longest = keys.reduce((accum, key) => {
@@ -210,7 +208,7 @@ export const makeRunner = (
 
                                 if (parsed.rawIn) {
 
-                                    appsSingleton[id].dataWait[parsed.rawIn.toString().replace(" --peprn:automated true", '')] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
+                                    appsSingleton[id].dataWait[parsed.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
 
 
                                 }

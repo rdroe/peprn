@@ -62,7 +62,6 @@ const doIgnore = (cli: string) => {
     }
     return ret
 }
-
 export const earlySaveHistory = async (apps: CliApps, id: string, val: string) => {
 
     const inclusible = !val.includes('--peprn:automated true')

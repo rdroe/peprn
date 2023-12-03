@@ -39,7 +39,7 @@
     "./browser": "./dist/browser.js",
     "./node": "./dist/node.js",
     "./match": "./dist/match/index.js",
-    "./fakeCli": "./dist/fakeCli.js"  
+    "./fakeCli": "./dist/fakeCli.js"
   },
   "main": "nyargs",
   "engines": {
