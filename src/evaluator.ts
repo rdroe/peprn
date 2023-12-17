@@ -3,7 +3,7 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
-import { isNode, PEPRN_AUTO_TRUE, cleanHistory } from './util'
+import { isNode, PEPRN_AUTO_TRUE, PEPRN_MULTILINE, PEPRN_MULTILINE_INDEX, PEPRN_MULTILINE_TOTAL, PEPRN_MULTILINE_TRUE } from './util'
 
 export const shared: {
     queue: string[]
@@ -11,30 +11,26 @@ export const shared: {
     queue: []
 }
 
-
-
 let apps: CliApps | null = null
 
-export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
+export const fakeCli = async (rawInput: string, appId: string = 'cli', isInternal = false) => {
     if (!apps) return
     const rawInTrimmed = rawInput.trim()
-    const rawIn = `${rawInput} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
+    const rawIn = isInternal
+        ? rawInTrimmed
+        : `${rawInput} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
+
     const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
 
     if (apps[appId].dataWait && apps[appId].dataWait[rawInTrimmed]) {
         const calls = await apps[appId].dataWait[rawInTrimmed]
-
         const keys = Object.keys(calls)
         let longest = keys.reduce((accum, key) => {
             return key.length > accum.length ? key : accum
         }, '')
         return calls[longest]
     }
-
     return prom
-
-
-
 };
 
 
@@ -125,7 +121,7 @@ export const makeRunner = (
     apps = appsSingleton
     const { modules = { match }, id } = opts
     // Note: opts.multiLineDefaults is used both here and in browser.ts and node.ts (but not node, yet)
-    if (opts.multilineDefaults) {
+    if (opts.multilineDefaults || opts.multilineDefaults === undefined) {
         if (opts.preprocessInput) {
             opts.preprocessInput = (preprocIn) => {
                 const multilineResult = multilinePreprocessor(preprocIn)
@@ -144,7 +140,6 @@ export const makeRunner = (
     return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
         let parsed: ParsedCli | null = null
 
-
         try {
             const input = opts.preprocessInput ? opts.preprocessInput(inputRaw, id, appsSingleton) : inputRaw
             if (input === null) {
@@ -153,7 +148,9 @@ export const makeRunner = (
                     message: `raw user input lead to invalid processing (possibly pre-processing)`
                 })
             }
-            parsed = parse({ match, ...modules }, yargsOptions, input)
+
+            parsed = parse({ match, ...modules }, input)
+
             const matched = getMatchingModules({ match, ...modules })(input)
 
             const effects = appsSingleton[id]?.userEffects ?? []
@@ -196,11 +193,15 @@ export const makeRunner = (
                         (async function peprnModuleLoop() {
 
                             await allCalledProm // wait for all promises to be initialized before actually calling any functions on modules
-
-                            const resultProm = matched[o].fn(o === 0 ? {
+                            const parsed2 = {
                                 ...parsed,
+                                // some use cases likely only want the deepest module invokation (i.e. supposing a user wants to print only the bottom line of the program entered. the lineation is unrelated to ancestralDepth, but we need the ancestral depth in that case
+                                'peprn:ancestralDepth': o,
+                            }
+                            const resultProm = matched[o].fn(o === 0 ? {
+                                ...parsed2,
                                 'peprn:childmost': true
-                            } : parsed, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
+                            } : parsed2, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
 
                                 if (!appsSingleton[id].dataWait) {
                                     appsSingleton[id].dataWait = {}
@@ -210,17 +211,19 @@ export const makeRunner = (
 
                                     appsSingleton[id].dataWait[parsed.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
 
-
                                 }
 
                                 dataCallback(o === 0 ? {
-                                    ...parsed,
-                                    'peprn:childmost': true
-                                } : parsed, resolved, id)
+                                    ...parsed2,
+                                    'peprn:childmost': true,
+
+                                } : parsed2, resolved, id)
+
                                 effects.forEach((fn1) => {
                                     const matcher = argsMatchers.get(fn1) ?? null
                                     if (matcher === null || matcher(parsed)) {
-                                        fn1(parsed, resolved, id)
+
+                                        fn1(parsed2, resolved, id)
                                     }
                                 })
                                 return resolved
@@ -281,15 +284,23 @@ export const makeRunner = (
 function multilinePreprocessor(snt: string): string | null {
 
     if (snt.trim() === '') {
-
         return null;
     }
     if (snt.includes('"')) {
         throw new Error(`Do not include quotation marks`);
     }
     if (snt.includes('\n')) {
-        const sntsSplit = snt.split('\n');
-        const snts = sntsSplit.reduce((accum, curr) => {
+        const nth = PEPRN_MULTILINE_INDEX
+        const mlTrue = PEPRN_MULTILINE_TRUE
+        const mlTot = PEPRN_MULTILINE_TOTAL
+        const sntsSplit = snt.trim().split('\n')
+
+        const sntsProcessed = sntsSplit.map((userLine, idx): string => {
+            return `${userLine} --${nth} ${idx} --${mlTot} ${sntsSplit.length} ${mlTrue}`
+
+        })
+
+        const snts = sntsProcessed.reduce((accum, curr) => {
             const trimed = curr.trim();
             if (!trimed) {
                 return accum;
@@ -297,8 +308,12 @@ function multilinePreprocessor(snt: string): string | null {
             return [...accum, trimed];
         }, [] as string[]);
         const snt1 = snts.shift();
-        shared.queue.push(...snts);
-        const call = `${snt1}`;
+
+
+        shared.queue.push(...snts.map((userLine, idx) => {
+            return userLine
+        }));
+        const call = snt1
         return call;
     } else {
         return snt;

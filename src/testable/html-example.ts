@@ -13,9 +13,7 @@ createBrowserApp({
         }
     ],
     dataHandler: async (_, data) => {
-
         const div = document.querySelector('.matches') as HTMLBodyElement
-
         if (div && data !== undefined) {
             div.innerHTML = `${div.innerHTML}
 <div><pre>${JSON.stringify(data, null, 2)}</pre></div>

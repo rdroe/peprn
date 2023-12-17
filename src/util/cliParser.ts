@@ -57,7 +57,7 @@ const getIsModuleName = (modules: Modules) => (str: string): boolean | 'DOLLAR_M
     return false
 }
 
-export const parse = (modules: Modules, rawOpts: Opts, rawIn: string | string[]): ParsedCli => {
+export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => {
     let opts: Opts = { ...yargsOptions }
 
     const input: string[] = typeof rawIn === 'string' ? stringArgv(rawIn) : rawIn

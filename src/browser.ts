@@ -3,11 +3,10 @@ import { makeRunner, CliApp, Opts, EvalInteraction, DataHandler, shared } from '
 
 import { Modules, } from './util/types'
 import { conditionallyAddBrowserDefault } from './default-browser-app'
-import { fakeCli } from './util/react-utils'
+import { fakeCli } from './evaluator'
 export * from './util/react-utils'
 export { earlySaveHistory, cleanHistory, historyIgnore, ignoreIfStartingWith } from './browser-default-history'
 export const apps: { [id: string]: CliApp } = {}
-
 
 const makeFinalCallback = (id: string, res: Function) => async (err: null | Error, result: any) => {
     // @ts-ignore
@@ -25,7 +24,6 @@ const genericDataHandler: DataHandler = async (parsed, data, uniqueAppId) => {
     }
 }
 
-
 const defaultModules: Modules = {
     hideOutput: {
         fn: async function() {
@@ -38,6 +36,7 @@ const defaultModules: Modules = {
     },
     showOutput: {
         fn: async function() {
+
             const dataEl = document.querySelector('div.peprn-default-out') as HTMLDivElement
             if (dataEl && dataEl?.style) {
                 dataEl.style.right = '0px'
@@ -49,13 +48,14 @@ const defaultModules: Modules = {
 const multilineUserEffect: DataHandler = function multilineUserEffect(_, __, appId) {
     const shifted = shared.queue.shift()
     if (shifted) {
-        return fakeCli(shifted, appId)
+        return fakeCli(shifted, appId, true)
     }
 }
 
 
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
-    const { id, modules, history, useBrowserDefault } = opts
+    const { id, modules, history, useBrowserDefault, multilineDefaults: userMultilineDefaultsChoice } = opts
+    const multilineDefaults = userMultilineDefaultsChoice === true || userMultilineDefaultsChoice === undefined ? true : false
     let combinedModules = { ...modules }
     if (useBrowserDefault === undefined) {
         combinedModules = {
@@ -69,7 +69,8 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
         combinedModules.history = combinedModules.history || historyCmd
     }
     const outputSelector = `#${id}-out`
-    const newUes = opts.multilineDefaults ? [multilineUserEffect, ...(opts.userEffects ?? [])] : (opts.userEffects ?? [])
+
+    const newUes = multilineDefaults ? [multilineUserEffect, ...(opts.userEffects ?? [])] : (opts.userEffects ?? [])
 
     apps[id] = {
         el: document.querySelector(`#${id}`),
@@ -109,6 +110,7 @@ function makeProm(id: string) {
                         apps[id].el.value = t
                     }
                 }
+
                 await apps[id].evaluator(t, apps[id].dataHandler, makeFinalCallback(id, res))
                 evalInter = 'called'
             }
