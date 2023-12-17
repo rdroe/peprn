@@ -27,7 +27,9 @@ export const history: Module = {
         delete: {
             fn: async (_, __, appId, apps: CliApps) => {
                 if (!appId || typeof appId !== 'string') return "Argument appId is required and must be a string"
+
                 const storedHistIds = (await histDb.history.where('cliId').equals(appId).toArray()).map(({ id }) => id)
+
                 const deletion = await histDb.history.bulkDelete(storedHistIds)
                 apps[appId].historyData = []
                 apps[appId].histCursor = 0
@@ -63,7 +65,6 @@ const doIgnore = (cli: string) => {
     return ret
 }
 export const earlySaveHistory = async (apps: CliApps, id: string, val: string) => {
-
     const inclusible = !val.includes('--peprn:automated true')
     if (val && doIgnore(val) === false) {
         if (inclusible || apps[id].rememberAutomated) {
@@ -92,13 +93,11 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
 
             apps[id].histCursor = apps[id].historyData.length // cursor beyond end
             const val = cleanHistory(apps[id].el.value)
-
             earlySaveHistory(apps, id, val)
 
         } else if (key.key === 'ArrowDown' && key.altKey) {
 
             let did = false
-
             if (typeof apps[id].historyData[apps[id].histCursor + 1] === 'string') {
                 did = true
                 apps[id].histCursor += 1
