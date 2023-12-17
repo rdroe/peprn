@@ -3,12 +3,8 @@ import * as match from "../match"
 import { apps } from "../browser"
 import { foo } from './foo'
 import { cliTest } from "./cliTest"
-<<<<<<< Updated upstream
 import { ParsedCli, PEPRN_AUTO } from '../util'
-=======
-import { ParsedCli } from '../util'
 
->>>>>>> Stashed changes
 createBrowserApp({
     id: 'cli', modules: {
         match: match.default, cliTest, foo
