@@ -18,26 +18,63 @@ export const shared: {
 
 
 let apps: CliApps | null = null
-
+const regexGetLineNumber = /peprn\:multilineIndex\s([0-9]{1,3})/;
+const regexGetProgramSize = /peprn\:multilineTotal\s([0-9]{1,3})/;
+const parseLine = (line: string): number => {
+    const parse = line.match(regexGetLineNumber)
+    if (!parse || !parse[1]) return -99
+    return parseInt(parse[1])
+}
+const parseLineForProgramSize = (line: string): number => {
+    const parse = line.match(regexGetProgramSize)
+    if (!parse || !parse[1]) return 0
+    return parseInt(parse[1])
+}
 export const fakeCli = async (rawInput: string, appId: string = 'cli', isInternal = false) => {
     if (!apps) return
     const rawInTrimmed = rawInput.trim()
-    const rawIn = isInternal
+    const rawIn = !isInternal
         ? rawInTrimmed.replace(/\s\s+/g, ' ').trim()
         : `${rawInTrimmed} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
 
     const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
+    const ownLineNum = parseLine(rawIn)
 
+    const dw =
+        ownLineNum > 0 && apps[appId].dataWait
+            ?
+            apps[appId].dataWait : []
 
-    if (apps[appId].dataWait && apps[appId].dataWait[rawInTrimmed]) {
-        const calls = await apps[appId].dataWait[rawInTrimmed]
-        console.log('condition triggered; calls for ', rawIn, calls)
-        const keys = Object.keys(calls)
-        let longest = keys.reduce((accum, key) => {
-            return key.length > accum.length ? key : accum
-        }, '')
-        return calls[longest]
+    const priorLines = dw.filter(([lineNum, prom]) => {
+        if (lineNum < 0) return false
+        return lineNum < ownLineNum
+    })
+
+    const progSize = parseLineForProgramSize(rawIn)
+    if (priorLines.length) {
+        await Promise.all(priorLines.map(([, prom]) => prom))
+        const ownPromTuple = dw.find(([k]) => k === ownLineNum)
+        if (ownLineNum === progSize - 1) {
+            await Promise.all(Object.values(
+                apps[appId].dataWait
+            ))
+            delete apps[appId].dataWait
+        }
+
+        if (ownPromTuple) {
+            const data = await ownPromTuple[1]
+            const sortedByKeyLength = Object.entries(data).sort(([cliLineA], [cliLineB]) => {
+                return cliLineB.length - cliLineA.length
+            })
+
+            const longestByKey = sortedByKeyLength[0]
+
+            console.log('awaited data', data, 'longest', longestByKey)
+
+            return longestByKey[1]
+        }
     }
+    console.log('nested call', rawIn, 'result', prom)
     return prom
 };
 
@@ -78,7 +115,7 @@ export type CliApp = {
     histCursor?: number
     userEffects: DataHandler[]
     userKeyEffects: KeyHandler[]
-    dataWait?: { [serial: string]: Promise<any> }
+    dataWait?: PromiseByLine[]
     rememberAutomated: boolean
 }
 
@@ -218,18 +255,35 @@ export const makeRunner = (
                             } : parsed2, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
 
                                 if (!appsSingleton[id].dataWait) {
-                                    appsSingleton[id].dataWait = {}
+                                    appsSingleton[id].dataWait = []
                                 }
 
                                 if (parsed.rawIn) {
-                                    const dataProm = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
 
+                                    const dataProm = awaitAll(successiveCalls)
                                     const cliLineProm2 = [
                                         parsed[PEPRN_MULTILINE_INDEX] ?? -99,
                                         dataProm
                                     ] as PromiseByLine
 
-                                    appsSingleton[id].dataWait[parsed.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = dataProm
+                                    const myLine = parseLine(parsed.rawIn.toString())
+                                    if (myLine >= 0 && appsSingleton[id].dataWait.find(([k]) => k === myLine) === undefined) {
+                                        console.log('new push in dataWait',
+                                            {
+                                                cli: parsed.rawIn,
+                                                progSize: parsed[PEPRN_MULTILINE_TOTAL],
+                                                myLine: parsed[PEPRN_MULTILINE_INDEX],
+                                                'var o': o,
+                                                parsed2: JSON.parse(JSON.stringify(parsed2)),
+
+                                            })
+                                        appsSingleton[id].dataWait.push(cliLineProm2)
+                                    }
+
+
+
+
+
 
                                 }
 

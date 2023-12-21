@@ -23,7 +23,8 @@ export const cliTest: Module = {
             },
             fn: async () => {
                 const fromTwo = await fakeCli(`cliTest two`, 'cli')
-
+                const fakeCliResult = await fakeCli(`match scalar -l 99 -r 100`)
+                console.log('fake cli result in one', fakeCliResult)
                 return { one: fromTwo }
             }
         },

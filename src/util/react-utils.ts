@@ -3,7 +3,7 @@ import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../ind
 import { apps } from '../browser';
 import { cleanHistory, earlySaveHistory } from '../browser-default-history';
 import { PEPRN_AUTO_TRUE } from '../util';
-
+import { fakeCli as fakeCliFn } from '../evaluator'
 
 type DataHandlerReactCallback = DataHandler
 
@@ -11,42 +11,7 @@ const createAppIntervals: {
     [prop: string]: ReturnType<typeof setInterval>
 } = {}
 
-export const fakeCli = async (rawInput: string, appId: string = 'cli') => {
-
-    const textArea = apps[appId].el;
-    if (!textArea) {
-        throw new Error(`Could not find "${appId}" app textarea`);
-    }
-    const storableHist = cleanHistory(textArea.value)
-
-    if (storableHist) {
-        await earlySaveHistory(apps, appId, storableHist)
-    }
-
-    textArea.value = `${rawInput} ${PEPRN_AUTO_TRUE}`;
-
-    textArea.dispatchEvent(
-        new KeyboardEvent('keyup', { code: 'Enter', key: 'Enter' }),
-    );
-    await apps[appId].restarter
-
-
-    const rawIn = rawInput.replace(/\s\s+/g, ' ').trim()
-    if (apps[appId].dataWait[rawIn]) {
-        const calls = await apps[appId].dataWait[rawIn]
-
-        const keys = Object.keys(calls)
-
-        let longest = keys.reduce((accum, key) => {
-            return key.length > accum.length ? key : accum
-        }, '')
-        return calls[longest]
-    }
-
-    return apps[appId].restarter;
-
-
-};
+export const fakeCli = fakeCliFn
 
 export const useFakeCli = () => {
     return fakeCli
