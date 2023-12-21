@@ -3,7 +3,12 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
-import { isNode, PEPRN_AUTO_TRUE, PEPRN_MULTILINE, PEPRN_MULTILINE_INDEX, PEPRN_MULTILINE_TOTAL, PEPRN_MULTILINE_TRUE } from './util'
+import { isNode, PEPRN_AUTO_TRUE, PEPRN_MULTILINE_INDEX, PEPRN_MULTILINE_TOTAL, PEPRN_MULTILINE_TRUE } from './util'
+
+type PromiseByLine = [
+    nonWhitespaceLineNumber: number,
+    prom: any
+]
 
 export const shared: {
     queue: string[]
@@ -11,19 +16,22 @@ export const shared: {
     queue: []
 }
 
+
 let apps: CliApps | null = null
 
 export const fakeCli = async (rawInput: string, appId: string = 'cli', isInternal = false) => {
     if (!apps) return
     const rawInTrimmed = rawInput.trim()
     const rawIn = isInternal
-        ? rawInTrimmed
-        : `${rawInput} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
+        ? rawInTrimmed.replace(/\s\s+/g, ' ').trim()
+        : `${rawInTrimmed} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
 
     const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
 
+
     if (apps[appId].dataWait && apps[appId].dataWait[rawInTrimmed]) {
         const calls = await apps[appId].dataWait[rawInTrimmed]
+        console.log('condition triggered; calls for ', rawIn, calls)
         const keys = Object.keys(calls)
         let longest = keys.reduce((accum, key) => {
             return key.length > accum.length ? key : accum
@@ -82,12 +90,16 @@ export type ArgsMatcher = (parsedCli: ParsedCli) => boolean
 export const argsMatchers = new Map<DataHandler, ArgsMatcher>
 
 const isCallForHelp = (input: string): boolean => {
-
-    return input.trim().split(' ').includes('--help') || input.trim().split(' ').includes('-h')
+    return input
+        .trim()
+        .split(' ')
+        .includes('--help') || input
+            .trim()
+            .split(' ')
+            .includes('-h')
 }
 
 const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
-
     const modHelp = matched.filter(({ help }) => {
         return !!help
     })
@@ -106,6 +118,7 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
             }))
         }
     }
+
 
     return helpResults
 }
@@ -198,6 +211,7 @@ export const makeRunner = (
                                 // some use cases likely only want the deepest module invokation (i.e. supposing a user wants to print only the bottom line of the program entered. the lineation is unrelated to ancestralDepth, but we need the ancestral depth in that case
                                 'peprn:ancestralDepth': o,
                             }
+
                             const resultProm = matched[o].fn(o === 0 ? {
                                 ...parsed2,
                                 'peprn:childmost': true
@@ -208,21 +222,25 @@ export const makeRunner = (
                                 }
 
                                 if (parsed.rawIn) {
+                                    const dataProm = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
 
-                                    appsSingleton[id].dataWait[parsed.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
+                                    const cliLineProm2 = [
+                                        parsed[PEPRN_MULTILINE_INDEX] ?? -99,
+                                        dataProm
+                                    ] as PromiseByLine
+
+                                    appsSingleton[id].dataWait[parsed.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = dataProm
 
                                 }
 
                                 dataCallback(o === 0 ? {
                                     ...parsed2,
                                     'peprn:childmost': true,
-
                                 } : parsed2, resolved, id)
 
                                 effects.forEach((fn1) => {
                                     const matcher = argsMatchers.get(fn1) ?? null
                                     if (matcher === null || matcher(parsed)) {
-
                                         fn1(parsed2, resolved, id)
                                     }
                                 })
@@ -308,8 +326,6 @@ function multilinePreprocessor(snt: string): string | null {
             return [...accum, trimed];
         }, [] as string[]);
         const snt1 = snts.shift();
-
-
         shared.queue.push(...snts.map((userLine, idx) => {
             return userLine
         }));
