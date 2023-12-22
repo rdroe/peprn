@@ -12,6 +12,19 @@ export const shared: {
 }
 
 let apps: CliApps | null = null
+const regexGetLineNumber = /peprn\:multilineIndex\s([0-9]{1,3})/;
+const regexGetProgramSize = /peprn\:multilineTotal\s([0-9]{1,3})/;
+const parseLine = (line: string): number => {
+    const parse = line.match(regexGetLineNumber)
+    if (!parse || !parse[1]) return -99
+    return parseInt(parse[1])
+}
+
+const parseLineForProgramSize = (line: string): number => {
+    const parse = line.match(regexGetProgramSize)
+    if (!parse || !parse[1]) return 0
+    return parseInt(parse[1])
+}
 
 export const fakeCli = async (rawInput: string, appId: string = 'cli', isInternal = false) => {
     if (!apps) return
@@ -20,9 +33,32 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli', isInterna
         ? rawInTrimmed
         : `${rawInput} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
 
+    const ownLineIndex = parseLine(rawIn)
+    const toAwait = Object.entries(apps[appId].dataWait || {}).filter(([cli, prom]) => {
+        if (typeof ownLineIndex !== 'number') return false
+        const lineIdx = parseLine(cli)
+        if (lineIdx !== null && !isNaN(lineIdx)) {
+            if (lineIdx >= 0) {
+                if (lineIdx < ownLineIndex) {
+                    console.log('comparable', { lineIdx, ownLineIndex })
+                    return true
+                }
+            }
+        }
+        return false
+    })
+    console.log('on getting', rawIn, 'waitable', toAwait)
+    if (toAwait.length) {
+        await Promise.all(toAwait.map(([, p]) => {
+            return p
+        }))
+        console.log('awaited! past')
+    }
     const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
 
+
     if (apps[appId].dataWait && apps[appId].dataWait[rawInTrimmed]) {
+
         const calls = await apps[appId].dataWait[rawInTrimmed]
         const keys = Object.keys(calls)
         let longest = keys.reduce((accum, key) => {
