@@ -3,19 +3,13 @@ import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
-import { isNode, PEPRN_AUTO_TRUE, PEPRN_MULTILINE_INDEX, PEPRN_MULTILINE_TOTAL, PEPRN_MULTILINE_TRUE } from './util'
-
-type PromiseByLine = [
-    nonWhitespaceLineNumber: number,
-    prom: any
-]
+import { isNode, PEPRN_AUTO_TRUE, PEPRN_MULTILINE, PEPRN_MULTILINE_INDEX, PEPRN_MULTILINE_TOTAL, PEPRN_MULTILINE_TRUE } from './util'
 
 export const shared: {
     queue: string[]
 } = {
     queue: []
 }
-
 
 let apps: CliApps | null = null
 const regexGetLineNumber = /peprn\:multilineIndex\s([0-9]{1,3})/;
@@ -25,56 +19,53 @@ const parseLine = (line: string): number => {
     if (!parse || !parse[1]) return -99
     return parseInt(parse[1])
 }
+
 const parseLineForProgramSize = (line: string): number => {
     const parse = line.match(regexGetProgramSize)
     if (!parse || !parse[1]) return 0
     return parseInt(parse[1])
 }
+
 export const fakeCli = async (rawInput: string, appId: string = 'cli', isInternal = false) => {
     if (!apps) return
     const rawInTrimmed = rawInput.trim()
-    const rawIn = !isInternal
-        ? rawInTrimmed.replace(/\s\s+/g, ' ').trim()
-        : `${rawInTrimmed} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
+    const rawIn = isInternal
+        ? rawInTrimmed
+        : `${rawInput} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
 
-    const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
-    const ownLineNum = parseLine(rawIn)
+    const ownLineIndex = parseLine(rawIn)
+    const toAwait = Object.entries(apps[appId].dataWait || {}).filter(([cli, prom]) => {
+        if (typeof ownLineIndex !== 'number') return false
+        const lineIdx = parseLine(cli)
+        if (lineIdx !== null && !isNaN(lineIdx)) {
+            if (lineIdx >= 0) {
+                if (lineIdx < ownLineIndex) {
 
-    const dw =
-        ownLineNum > 0 && apps[appId].dataWait
-            ?
-            apps[appId].dataWait : []
-
-    const priorLines = dw.filter(([lineNum, prom]) => {
-        if (lineNum < 0) return false
-        return lineNum < ownLineNum
+                    return true
+                }
+            }
+        }
+        return false
     })
 
-    const progSize = parseLineForProgramSize(rawIn)
-    if (priorLines.length) {
-        await Promise.all(priorLines.map(([, prom]) => prom))
-        const ownPromTuple = dw.find(([k]) => k === ownLineNum)
-        if (ownLineNum === progSize - 1) {
-            await Promise.all(Object.values(
-                apps[appId].dataWait
-            ))
-            delete apps[appId].dataWait
-        }
+    if (toAwait.length) {
+        await Promise.all(toAwait.map(([, p]) => {
+            return p
+        }))
 
-        if (ownPromTuple) {
-            const data = await ownPromTuple[1]
-            const sortedByKeyLength = Object.entries(data).sort(([cliLineA], [cliLineB]) => {
-                return cliLineB.length - cliLineA.length
-            })
-
-            const longestByKey = sortedByKeyLength[0]
-
-            console.log('awaited data', data, 'longest', longestByKey)
-
-            return longestByKey[1]
-        }
     }
-    console.log('nested call', rawIn, 'result', prom)
+    const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
+
+
+    if (apps[appId].dataWait && apps[appId].dataWait[rawInTrimmed]) {
+
+        const calls = await apps[appId].dataWait[rawInTrimmed]
+        const keys = Object.keys(calls)
+        let longest = keys.reduce((accum, key) => {
+            return key.length > accum.length ? key : accum
+        }, '')
+        return calls[longest]
+    }
     return prom
 };
 
@@ -115,7 +106,7 @@ export type CliApp = {
     histCursor?: number
     userEffects: DataHandler[]
     userKeyEffects: KeyHandler[]
-    dataWait?: PromiseByLine[]
+    dataWait?: { [serial: string]: Promise<any> }
     rememberAutomated: boolean
 }
 
@@ -127,16 +118,12 @@ export type ArgsMatcher = (parsedCli: ParsedCli) => boolean
 export const argsMatchers = new Map<DataHandler, ArgsMatcher>
 
 const isCallForHelp = (input: string): boolean => {
-    return input
-        .trim()
-        .split(' ')
-        .includes('--help') || input
-            .trim()
-            .split(' ')
-            .includes('-h')
+
+    return input.trim().split(' ').includes('--help') || input.trim().split(' ').includes('-h')
 }
 
 const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
+
     const modHelp = matched.filter(({ help }) => {
         return !!help
     })
@@ -155,7 +142,6 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
             }))
         }
     }
-
 
     return helpResults
 }
@@ -248,53 +234,31 @@ export const makeRunner = (
                                 // some use cases likely only want the deepest module invokation (i.e. supposing a user wants to print only the bottom line of the program entered. the lineation is unrelated to ancestralDepth, but we need the ancestral depth in that case
                                 'peprn:ancestralDepth': o,
                             }
-
                             const resultProm = matched[o].fn(o === 0 ? {
                                 ...parsed2,
                                 'peprn:childmost': true
                             } : parsed2, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
 
                                 if (!appsSingleton[id].dataWait) {
-                                    appsSingleton[id].dataWait = []
+                                    appsSingleton[id].dataWait = {}
                                 }
 
                                 if (parsed.rawIn) {
 
-                                    const dataProm = awaitAll(successiveCalls)
-                                    const cliLineProm2 = [
-                                        parsed[PEPRN_MULTILINE_INDEX] ?? -99,
-                                        dataProm
-                                    ] as PromiseByLine
-
-                                    const myLine = parseLine(parsed.rawIn.toString())
-                                    if (myLine >= 0 && appsSingleton[id].dataWait.find(([k]) => k === myLine) === undefined) {
-                                        console.log('new push in dataWait',
-                                            {
-                                                cli: parsed.rawIn,
-                                                progSize: parsed[PEPRN_MULTILINE_TOTAL],
-                                                myLine: parsed[PEPRN_MULTILINE_INDEX],
-                                                'var o': o,
-                                                parsed2: JSON.parse(JSON.stringify(parsed2)),
-
-                                            })
-                                        appsSingleton[id].dataWait.push(cliLineProm2)
-                                    }
-
-
-
-
-
+                                    appsSingleton[id].dataWait[parsed.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
 
                                 }
 
                                 dataCallback(o === 0 ? {
                                     ...parsed2,
                                     'peprn:childmost': true,
+
                                 } : parsed2, resolved, id)
 
                                 effects.forEach((fn1) => {
                                     const matcher = argsMatchers.get(fn1) ?? null
                                     if (matcher === null || matcher(parsed)) {
+
                                         fn1(parsed2, resolved, id)
                                     }
                                 })
@@ -380,6 +344,8 @@ function multilinePreprocessor(snt: string): string | null {
             return [...accum, trimed];
         }, [] as string[]);
         const snt1 = snts.shift();
+
+
         shared.queue.push(...snts.map((userLine, idx) => {
             return userLine
         }));

@@ -42,14 +42,12 @@ ${dataEl.innerHTML}
 `
                 didPrint = true
             }
-
         }
         if (!didPrint) {
 
         }
     },
     init: (ownId) => {
-
         apps[ownId].el.value = localStorage.getItem('match:initial') || ''
     }
 })
