@@ -40,19 +40,19 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli', isInterna
         if (lineIdx !== null && !isNaN(lineIdx)) {
             if (lineIdx >= 0) {
                 if (lineIdx < ownLineIndex) {
-                    console.log('comparable', { lineIdx, ownLineIndex })
+
                     return true
                 }
             }
         }
         return false
     })
-    console.log('on getting', rawIn, 'waitable', toAwait)
+
     if (toAwait.length) {
         await Promise.all(toAwait.map(([, p]) => {
             return p
         }))
-        console.log('awaited! past')
+
     }
     const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
 
