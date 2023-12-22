@@ -1,10 +1,9 @@
 import { Module } from '../util'
 export const foo: Module = {
-    fn: async () => {
-        return 'foo'
-    },
+    // note that a "fn" property is optional. this means a branch may be purely syntactic
     submodules: {
         'job': {
+
             fn: async () => {
                 return "i should run"
             }
@@ -16,9 +15,8 @@ export const foo: Module = {
             },
             submodules: {
                 'bar': {
-                    fn: async () => {
-
-                        return 'bar'
+                    fn: async ({ $: dollar }) => {
+                        return `foo.$.bar; your dyna command is ${dollar[0]}`
                     }
                 }
             }

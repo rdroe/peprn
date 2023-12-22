@@ -234,7 +234,9 @@ export const makeRunner = (
                                 // some use cases likely only want the deepest module invokation (i.e. supposing a user wants to print only the bottom line of the program entered. the lineation is unrelated to ancestralDepth, but we need the ancestral depth in that case
                                 'peprn:ancestralDepth': o,
                             }
-                            const resultProm = matched[o].fn(o === 0 ? {
+
+                            const moduleFn = matched[o].fn === undefined ? async function peprnNoop() { } : matched[o].fn
+                            const resultProm = moduleFn(o === 0 ? {
                                 ...parsed2,
                                 'peprn:childmost': true
                             } : parsed2, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
