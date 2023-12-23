@@ -43,8 +43,9 @@ ${dataEl.innerHTML}
                 didPrint = true
             }
         }
-        if (!didPrint) {
 
+        if (!didPrint) {
+            console.log(data)
         }
     },
     init: (ownId) => {

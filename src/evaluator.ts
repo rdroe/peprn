@@ -20,6 +20,10 @@ const parseLine = (line: string): number => {
     return parseInt(parse[1])
 }
 
+const isCallForManual = (inp: string) => {
+    return inp.split(' ').includes('--man')
+}
+
 const parseLineForProgramSize = (line: string): number => {
     const parse = line.match(regexGetProgramSize)
     if (!parse || !parse[1]) return 0
@@ -122,6 +126,39 @@ const isCallForHelp = (input: string): boolean => {
     return input.trim().split(' ').includes('--help') || input.trim().split(' ').includes('-h')
 }
 
+type HelpOutput = {
+    [stem: string]: HelpOutput
+} | string
+
+const getRecursiveModuleHelp = (mod: Module, myName: string, myStem: string[], accum: [
+    stem: string,
+    help: HelpOutput
+][], isTopLevel = true) => {
+
+    const examplePrefix = [...myStem, myName].join(' ')
+    const helpResults: HelpOutput = {}
+    if (mod?.help?.description) {
+        helpResults.description = mod.help.description
+    }
+
+    if (mod?.help?.examples) {
+        helpResults.examples = Object.fromEntries(Object.entries(
+            mod.help.examples
+        ).map(([exampleArgs, exampleDes]) => {
+            return [`${examplePrefix} ${exampleArgs}`, exampleDes]
+        }))
+    }
+    accum.push([examplePrefix, helpResults])
+    if (mod?.submodules) {
+        Object.entries(mod.submodules).forEach(([nm, submod]) => getRecursiveModuleHelp(submod, nm, [examplePrefix], accum, false))
+    }
+
+    if (isTopLevel) {
+        return accum
+    }
+
+}
+
 const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
 
     const modHelp = matched.filter(({ help }) => {
@@ -131,7 +168,6 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
     let helpResults: any = "no help defined"
 
     if (modHelp[0]) {
-        helpResults = modHelp[0]
         const examplePrefix = parsed.commands.join(' ')
         helpResults = {
             [examplePrefix]: modHelp[0].help.description,
@@ -145,6 +181,8 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
 
     return helpResults
 }
+
+
 
 export const makeRunner = (
     opts: Opts,
@@ -191,21 +229,45 @@ export const makeRunner = (
 
             const effects = appsSingleton[id]?.userEffects ?? []
 
+            matched.reverse()
+
+            const topHelpModule = matched.length
+                ? matched[matched.length - 1]
+                : { submodules: modules }
+
+            if (isCallForManual(input)) {
+                const firstStem = parsed.commands.slice()
+                const helpName = firstStem.shift() ?? ''
+
+                const recursiveHelpResults = getRecursiveModuleHelp(
+                    topHelpModule,
+                    helpName,
+                    firstStem,
+                    [],
+                )
+
+                dataCallback(parsed, recursiveHelpResults, id).then(() => {
+                    finalCallback(null, recursiveHelpResults)
+                })
+
+                return
+
+            } else if (isCallForHelp(input)) {
+
+                const helpResults = getHelpOutput(
+                    matched.length ? matched : [topHelpModule],
+                    parsed
+                )
+
+                dataCallback(parsed, helpResults, id).then(() => {
+                    finalCallback(null, helpResults)
+                })
+
+                return
+            }
+
             if (matched.length) {
-                matched.reverse()
-                if (isCallForHelp(input)) {
 
-                    const helpResults = getHelpOutput(
-                        matched,
-                        parsed
-                    )
-
-                    dataCallback(parsed, helpResults, id).then(() => {
-                        finalCallback(null, helpResults)
-                    })
-
-                    return
-                }
 
                 const modNames = [...parsed.moduleNames]
 
