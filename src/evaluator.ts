@@ -137,6 +137,7 @@ const getRecursiveModuleHelp = (mod: Module, myName: string, myStem: string[], a
 
     const examplePrefix = [...myStem, myName].join(' ')
     const helpResults: HelpOutput = {}
+
     if (mod?.help?.description) {
         helpResults.description = mod.help.description
     }
@@ -148,7 +149,9 @@ const getRecursiveModuleHelp = (mod: Module, myName: string, myStem: string[], a
             return [`${examplePrefix} ${exampleArgs}`, exampleDes]
         }))
     }
+
     accum.push([examplePrefix, helpResults])
+
     if (mod?.submodules) {
         Object.entries(mod.submodules).forEach(([nm, submod]) => getRecursiveModuleHelp(submod, nm, [examplePrefix], accum, false))
     }
@@ -195,27 +198,23 @@ export const makeRunner = (
     apps = appsSingleton
     const { modules = { match }, id } = opts
     // Note: opts.multiLineDefaults is used both here and in browser.ts and node.ts (but not node, yet)
-    if (opts.multilineDefaults || opts.multilineDefaults === undefined) {
-        if (opts.preprocessInput) {
-            opts.preprocessInput = (preprocIn) => {
-                const multilineResult = multilinePreprocessor(preprocIn)
-                if (multilineResult === null) {
-                    return null
-                }
-                return opts.preprocessInput(multilineResult, id, appsSingleton)
-            }
-        } else {
-            opts.preprocessInput = multilinePreprocessor
-        }
-
-    }
-
 
     return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
         let parsed: ParsedCli | null = null
 
         try {
-            const input = opts.preprocessInput ? opts.preprocessInput(inputRaw, id, appsSingleton) : inputRaw
+            let input = inputRaw
+            if (opts.multilineDefaults || opts.multilineDefaults === undefined) {
+                let input = multilinePreprocessor(inputRaw)
+                console.log('input', input)
+                if (typeof input !== null) {
+                    input = opts.preprocessInput ? opts.preprocessInput(input, id, appsSingleton) : input
+                }
+                console.log('input 2', input)
+            } else {
+                input = multilinePreprocessor(inputRaw)
+            }
+
             if (input === null) {
                 throw ({
                     name: "user input could not be processed",
