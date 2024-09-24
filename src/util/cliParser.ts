@@ -58,6 +58,7 @@ const getIsModuleName = (modules: Modules) => (str: string): boolean | 'DOLLAR_M
 }
 
 export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => {
+    console.log('raw in to parse', rawIn)
     let opts: Opts = { ...yargsOptions }
 
     const input: string[] = typeof rawIn === 'string' ? stringArgv(rawIn) : rawIn
@@ -150,13 +151,16 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
 
             const newCursNames = newCursAlias ? [newCursOptName, newCursAlias] : [newCursOptName]
 
-            return {
+            const ret1 =
+            {
                 ...accum,
                 temp: {
                     lastCommandReached: true,
                     cursor: [newCursNames, newCursOpt]
                 }
             }
+            //            console.log('raw return to parse 0 ', ret1)
+            return ret1
 
             // non-hyphenated thing reached; use cursor if present
         } else if (temp.lastCommandReached && temp?.cursor?.length) {
@@ -246,7 +250,7 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
         rawIn: typeof rawIn === 'string' ? rawIn.replace(/\s\s+/, ' ').trim() : rawIn
 
     } as ParsedCli)
-
+    //    console.log('raw return to parse 1', ret)
     return ret
 }
 

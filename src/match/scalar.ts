@@ -15,9 +15,11 @@ const cm: Module<ParsedCli & { l: Matchables, r: Matchables }> = {
     },
     fn: async function scalarMatch(argv: { l: Matchables, r: Matchables }) {
         const { l, r: right } = argv
-
+        console.log("l and r", { l, r: right })
+        console.log('argv all', argv)
         return l.map((ll, idx) => {
             const rt = right[idx]
+
             return {
                 index: idx,
                 match: ll === rt,

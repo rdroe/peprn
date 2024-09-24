@@ -48,6 +48,11 @@ ${dataEl.innerHTML}
             console.log(data)
         }
     },
+    /*
+    preprocessInput: (str) => {
+        console.log('preprocessInput');
+        return str
+    },*/
     init: (ownId) => {
         apps[ownId].el.value = localStorage.getItem('match:initial') || ''
     }
