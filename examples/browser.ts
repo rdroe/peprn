@@ -70,6 +70,9 @@ yarn
         msg('added latest peprn from npm')
         return `yarn ts-build`
     }).replace(() => {
+        msg('copying some css')
+        return `cp -r css public/css`
+    }).replace(() => {
         msg('finished ts-build')
         return `yarn js-build`
     }).replace(() => {
