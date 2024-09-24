@@ -32,7 +32,7 @@ const parseLineForProgramSize = (line: string): number => {
 
 export const fakeCli = async (rawInput: string, appId: string = 'cli', isInternal = false) => {
     if (!apps) return
-    console.log('in fakeCli', rawInput)
+
     const rawInTrimmed = rawInput.trim()
     const rawIn = isInternal
         ? rawInTrimmed
@@ -202,26 +202,19 @@ export const makeRunner = (
 
     let preprocessor: ((str1: string, idd: string, single: CliApps) => string | null) | null = null
     opts.preprocessInput = opts.preprocessInput ?? ((str1: string) => str1)
-    console.log('opts.multilineDefaults', opts.multilineDefaults)
     if (opts.multilineDefaults || opts.multilineDefaults === undefined) {
-        console.log('multilineDefaults setup')
         if (opts.preprocessInput) {
-            console.log('multilineDefaults setup 2')
             preprocessor = (preprocIn, id1, singleto) => {
                 const multilineResult = multilinePreprocessor(preprocIn)
-                console.log('multline default result', multilineResult)
                 if (multilineResult === null) {
                     return null
                 }
                 return opts.preprocessInput(preprocIn, id1, singleto)
             }
         } else {
-            console.log('multilineDefaults setup 3')
             preprocessor = (a) => {
                 return multilinePreprocessor(a)
             }
-            console.log('prepprocessor', preprocessor.toString())
-            console.log('prepprocessor inner', multilinePreprocessor.toString())
         }
 
     }
@@ -231,8 +224,6 @@ export const makeRunner = (
 
         try {
             const input = preprocessor(inputRaw, id, appsSingleton)
-            console.log('input', input)
-            console.log('prepproc', preprocessor.toString())
             if (input === null) {
                 throw ({
                     name: "user input could not be processed",
@@ -285,7 +276,6 @@ export const makeRunner = (
 
             if (matched.length) {
 
-                console.log('before do', parsed)
                 const modNames = [...parsed.moduleNames]
 
                 modNames.reverse()
@@ -325,9 +315,9 @@ export const makeRunner = (
                                 }
 
                                 if (parsed.rawIn) {
-                                    console.log('parsed.rawIn', parsed.rawIn)
+
                                     appsSingleton[id].dataWait[parsed.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
-                                    console.log('appsSingleton[id].dataWait[parsed.rawIn]', appsSingleton[id].dataWait)
+
 
                                 }
 
