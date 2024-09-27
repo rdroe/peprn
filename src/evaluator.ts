@@ -230,9 +230,9 @@ export const makeRunner = (
                 return multilinePreprocessor(a)
             }
         }
-        preprocessor = opts.preprocessInput
-    }
 
+    }
+    preprocessor = preprocessor ?? opts.preprocessInput
     return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
         let parsed: ParsedCli | null = null
 
