@@ -230,7 +230,7 @@ export const makeRunner = (
                 return multilinePreprocessor(a)
             }
         }
-
+        preprocessor = opts.preprocessInput
     }
 
     return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
