@@ -209,6 +209,20 @@ export const makeRunner = (
                 if (multilineResult === null) {
                     return null
                 }
+                // The very first line; does not go through fakeCli like subsequent requests.
+                if (preprocIn.trim().includes('\n')) {
+                    const sntsSplit = preprocIn.trim().split('\n')
+                    // something about normal vars breaks the preprocess function.
+                    /*
+                    const withVars = addMultilineVarsToSingleLine(
+                        sntsSplit[0],
+                        0,
+                        sntsSplit
+                    )
+                    */
+                    return opts.preprocessInput(sntsSplit[0])
+
+                }
                 return opts.preprocessInput(preprocIn, id1, singleto)
             }
         } else {
@@ -387,7 +401,12 @@ export const makeRunner = (
     }
 }
 
-
+function addMultilineVarsToSingleLine(userLine: string, idx: number, sntsSplit: string[]) {
+    const nth = PEPRN_MULTILINE_INDEX
+    const mlTrue = PEPRN_MULTILINE_TRUE
+    const mlTot = PEPRN_MULTILINE_TOTAL
+    return `${userLine} --${nth} ${idx} --${mlTot} ${sntsSplit.length} ${mlTrue}`
+}
 
 function multilinePreprocessor(snt: string): string | null {
 
@@ -404,7 +423,8 @@ function multilinePreprocessor(snt: string): string | null {
         const sntsSplit = snt.trim().split('\n')
 
         const sntsProcessed = sntsSplit.map((userLine, idx): string => {
-            return `${userLine} --${nth} ${idx} --${mlTot} ${sntsSplit.length} ${mlTrue}`
+            return addMultilineVarsToSingleLine(userLine, idx, sntsSplit)
+
 
         })
 

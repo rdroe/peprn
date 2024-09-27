@@ -48,7 +48,6 @@ const defaultModules: Modules = {
 const multilineUserEffect: DataHandler = function multilineUserEffect(_, __, appId) {
     const shifted = shared.queue.shift()
     if (shifted) {
-        console.log('calling fake cli', shifted)
         return fakeCli(shifted, appId, true)
     }
 }
