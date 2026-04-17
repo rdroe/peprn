@@ -94,10 +94,10 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
                 accum.commands.push(curr)
                 if (isMatch === 'DOLLAR_MATCH') {
                     currModuleName = `${currModuleName} $`.trim()
-                    currSubmodules = currSubmodules['$'].submodules
+                    currSubmodules = (currSubmodules['$'].submodules ?? {}) as Modules
                 } else {
                     currModuleName = `${currModuleName} ${curr}`.trim()
-                    currSubmodules = currSubmodules[curr].submodules
+                    currSubmodules = (currSubmodules[curr].submodules ?? {}) as Modules
                 }
                 const und = accum['_'] ?? []
                 const uInGood = und.concat([curr])
@@ -237,6 +237,7 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
             }
         }
     }, {
+        _: [],
         positionalNonCommands: [],
         'c:c': [],
         'c:n': [],
@@ -249,14 +250,14 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
         },
         rawIn: typeof rawIn === 'string' ? rawIn.replace(/\s\s+/, ' ').trim() : rawIn
 
-    } as ParsedCli)
+    } as unknown as ParsedCli)
     return ret
 }
 
 
 export const getMatchingModules = (moduleObj: Modules | null) => (str: string): Module[] => {
 
-    if (!moduleObj) return
+    if (!moduleObj) return []
     const asArgs = stringArgv(str)
     const modulesAndSubmodules: Module[] = []
     let curs: string | number | undefined = asArgs.shift()

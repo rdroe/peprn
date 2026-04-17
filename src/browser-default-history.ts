@@ -69,10 +69,11 @@ export const earlySaveHistory = async (apps: CliApps, id: string, val: string) =
     const inclusible = !val.includes('--peprn:automated true')
     if (val && doIgnore(val) === false) {
         if (inclusible || apps[id].rememberAutomated) {
-            if (apps[id]?.historyData) {
-                if (apps[id].historyData[apps[id].historyData.length - 1] !== val) {
-                    apps[id].historyData.push(val)
-                    apps[id].histCursor = apps[id].historyData.length
+            const hd = apps[id]?.historyData
+            if (hd) {
+                if (hd[hd.length - 1] !== val) {
+                    hd.push(val)
+                    apps[id].histCursor = hd.length
                     addHistory(id, val)
                 }
             }

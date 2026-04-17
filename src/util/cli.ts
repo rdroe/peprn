@@ -63,7 +63,7 @@ const cliCommandFromUnknown = async (cliCalled: CliCalled, commandOrString: stri
     if (typeof commandOrString === 'string') return commandOrString
 
     let replaceFunctionResult: string
-    const prior = priorCall(cliCalled.idx)
+    const prior = priorCall(cliCalled.idx)!
     const directResult = commandOrString(`${prior.stdout}`)
     if (directResult === null) {
         shelljs.exec(`echo "exiting 1"`, () => {
@@ -91,7 +91,7 @@ const functionInvariants = async (cliCalled: CliCalled, commands: (string | Repl
         return [`Invariant failed; for "result(...)" call. a function must be passed as argument`, false]
     }
 
-    const prior = priorCall(ownIdx)
+    const prior = priorCall(ownIdx)!
 
     await prior.promise
 
@@ -135,7 +135,7 @@ function executeCommand(commands: (string | ReplaceFunctionArg)[], callType: 'cl
     const ownIdx = stack.length
     const cliCalled: CliCalled = {
         idx: ownIdx,
-        promise: null,
+        promise: Promise.resolve(),
         isDone: false,
         code: null,
         stdout: null,
@@ -179,10 +179,10 @@ function executeCommand(commands: (string | ReplaceFunctionArg)[], callType: 'cl
         })
 
     } else if (callType === 'wait') {
-        cliCalled.promise = priorCall(cliCalled.idx).promise.then(async () => {
+        cliCalled.promise = priorCall(cliCalled.idx)!.promise.then(async () => {
             const cmd = await cliCommandFromUnknown(cliCalled, commands[0])
             return new Promise<void>(async (res) => {
-                const prior = priorCall(ownIdx)
+                const prior = priorCall(ownIdx)!
                 await prior.promise
 
                 shelljs.exec(cmd, (code, stdout, stderr) => {

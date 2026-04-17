@@ -8,9 +8,9 @@ export * from './util/react-utils'
 export { earlySaveHistory, cleanHistory, historyIgnore, ignoreIfStartingWith } from './browser-default-history'
 export const apps: { [id: string]: CliApp } = {}
 
-const makeFinalCallback = (id: string, res: (value: unknown) => void) => async (err: null | Error, result: unknown) => {
+const makeFinalCallback = (id: string, res: (value: void) => void) => async (err: null | Error, _result: unknown) => {
     if (err) throw new Error(`Error intercepted; `, err)
-    res(result)
+    res()
     apps[id].restarter = makeProm(id)
 }
 
@@ -44,10 +44,10 @@ const defaultModules: Modules = {
     }
 }
 
-const multilineUserEffect: DataHandler = function multilineUserEffect(_, __, appId) {
+const multilineUserEffect: DataHandler = async function multilineUserEffect(_, __, appId) {
     const shifted = shared.queue.shift()
     if (shifted) {
-        return fakeCli(shifted, appId, true)
+        await fakeCli(shifted, appId, true)
     }
 }
 
@@ -72,12 +72,12 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
     const newUes = multilineDefaults ? [multilineUserEffect, ...(opts.userEffects ?? [])] : (opts.userEffects ?? [])
 
     apps[id] = {
-        el: document.querySelector(`#${id}`),
-        dataEl: document.querySelector(outputSelector),
+        el: document.querySelector(`#${id}`) as HTMLTextAreaElement ?? undefined,
+        dataEl: document.querySelector(outputSelector) as HTMLElement ?? undefined,
         evaluator: runner ? runner : makeRunner({ ...opts, modules: combinedModules }, apps),
         zodStore: {},
         dataHandler: opts.dataHandler ? opts.dataHandler : genericDataHandler,
-        restarter: null,
+        restarter: undefined,
         userEffects: newUes,
         userKeyEffects: opts.userKeyEffects ?? [],
         rememberAutomated: opts.rememberAutomated ?? false
@@ -94,19 +94,21 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
 
 function makeProm(id: string) {
     return new Promise<void>((res) => {
-        apps[id].el.onkeyup = async (ev: KeyboardEvent) => {
+        const el = apps[id].el
+        if (!el) return
+        el.onkeyup = async (ev: KeyboardEvent) => {
             let evalInter: EvalInteraction = 'not-called'
-            let t = apps[id].el.value
+            let t = el.value
 
             if (ev.key === 'Enter' && !ev.shiftKey) {
-                const loc1 = apps[id].el.selectionStart
-                const loc2 = apps[id].el.selectionEnd
+                const loc1 = el.selectionStart
+                const loc2 = el.selectionEnd
                 // in case user hit enter in middle of text
                 if (loc1 === loc2) {
                     const x = t.charCodeAt(loc1 - 1)
                     if (x === 10) {
-                        t = [apps[id].el.value.substring(0, loc1 - 1), apps[id].el.value.substring(loc1, apps[id].el.value.length)].join('')
-                        apps[id].el.value = t
+                        t = [el.value.substring(0, loc1 - 1), el.value.substring(loc1, el.value.length)].join('')
+                        el.value = t
                     }
                 }
 
@@ -114,16 +116,14 @@ function makeProm(id: string) {
                 evalInter = 'called'
             }
 
-            if (apps[id].history) {
-                await apps[id].history(ev, evalInter)
-            }
+            await apps[id].history?.(ev, evalInter)
 
             await Promise.all(apps[id].userKeyEffects.map((fn1) => {
                 return fn1(ev, id)
             }))
 
             if (ev.key === 'Enter' && !ev.shiftKey) {
-                apps[id].el.value = ''
+                el.value = ''
             }
         }
     })

@@ -66,7 +66,7 @@ export function conditionallyAddBrowserDefault(id: string, appsSingleton: { [id:
 <pre id="${id}-out"></pre>
 `
         body.appendChild(dataEl)
-        appsSingleton[id].dataEl = document.querySelector(`#${id}-out`)
+        appsSingleton[id].dataEl = document.querySelector(`#${id}-out`) as HTMLElement ?? undefined
         
     }
 }

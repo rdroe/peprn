@@ -55,9 +55,10 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli', isInterna
     const prom = await apps[appId].evaluator(rawIn, apps[appId].dataHandler, () => { })
 
 
-    if (apps[appId].dataWait && apps[appId].dataWait[rawInTrimmed]) {
+    const dataWait = apps[appId].dataWait
+    if (dataWait && rawInTrimmed in dataWait) {
 
-        const calls = await apps[appId].dataWait[rawInTrimmed]
+        const calls = await dataWait[rawInTrimmed]
         const keys = Object.keys(calls)
         const longest = keys.reduce((accum, key) => {
             return key.length > accum.length ? key : accum
@@ -171,10 +172,11 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
 
     if (modHelp[0]) {
         const examplePrefix = parsed.commands.join(' ')
+        const help = modHelp[0].help!
         helpResults = {
-            [examplePrefix]: modHelp[0].help.description,
-            examples: !modHelp[0].help.examples ? {} : Object.fromEntries(Object.entries(
-                modHelp[0].help.examples
+            [examplePrefix]: help.description,
+            examples: !help.examples ? {} : Object.fromEntries(Object.entries(
+                help.examples
             ).map(([exampleArgs, exampleDes]) => {
                 return [`${examplePrefix} ${exampleArgs}`, exampleDes]
             }))
@@ -200,8 +202,9 @@ export const makeRunner = (
 
     let preprocessor: ((str1: string, idd: string, single: CliApps) => string | null) | null = null
     opts.preprocessInput = opts.preprocessInput ?? ((str1: string) => str1)
+    const resolvedPreprocessInput = opts.preprocessInput
     if (opts.multilineDefaults || opts.multilineDefaults === undefined) {
-        if (opts.preprocessInput) {
+        if (resolvedPreprocessInput) {
             preprocessor = (preprocIn, id1, singleto) => {
                 const multilineResult = multilinePreprocessor(preprocIn)
                 if (multilineResult === null) {
@@ -218,10 +221,10 @@ export const makeRunner = (
                         sntsSplit
                     )
                     */
-                    return opts.preprocessInput(sntsSplit[0])
+                    return resolvedPreprocessInput(sntsSplit[0])
 
                 }
-                return opts.preprocessInput(preprocIn, id1, singleto)
+                return resolvedPreprocessInput(preprocIn, id1, singleto)
             }
         } else {
             preprocessor = (a) => {
@@ -235,7 +238,7 @@ export const makeRunner = (
         let parsed: ParsedCli | null = null
 
         try {
-            const input = preprocessor(inputRaw, id, appsSingleton)
+            const input = preprocessor!(inputRaw, id, appsSingleton)
             if (input === null) {
                 throw ({
                     name: "user input could not be processed",
@@ -316,7 +319,7 @@ export const makeRunner = (
                                 'peprn:ancestralDepth': o,
                             }
 
-                            const moduleFn = matched[o].fn === undefined ? async function peprnNoop() { } : matched[o].fn
+                            const moduleFn = matched[o].fn ?? async function peprnNoop() { }
                             const resultProm = moduleFn(o === 0 ? {
                                 ...parsed2,
                                 'peprn:childmost': true
@@ -325,10 +328,11 @@ export const makeRunner = (
                                 if (!appsSingleton[id].dataWait) {
                                     appsSingleton[id].dataWait = {}
                                 }
+                                const dw = appsSingleton[id].dataWait!
 
-                                if (parsed.rawIn) {
+                                if (parsed!.rawIn) {
 
-                                    appsSingleton[id].dataWait[parsed.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = appsSingleton[id].dataWait[parsed.rawIn.toString()] ?? awaitAll(successiveCalls)
+                                    dw[parsed!.rawIn.toString().replace(` ${PEPRN_AUTO_TRUE}`, '')] = dw[parsed!.rawIn.toString()] ?? awaitAll(successiveCalls)
 
 
                                 }
@@ -341,7 +345,7 @@ export const makeRunner = (
 
                                 effects.forEach((fn1) => {
                                     const matcher = argsMatchers.get(fn1) ?? null
-                                    if (matcher === null || matcher(parsed)) {
+                                    if (matcher === null || matcher(parsed!)) {
 
                                         fn1(parsed2, resolved, id)
                                     }
@@ -436,8 +440,7 @@ function multilinePreprocessor(snt: string): string | null {
         shared.queue.push(...snts.map((userLine) => {
             return userLine
         }));
-        const call = snt1
-        return call;
+        return snt1 ?? null;
     } else {
         return snt;
     }

@@ -8,7 +8,7 @@ createBrowserApp({
     },
     userKeyEffects: [
         async (key, ownId) => {
-            const currCmd = apps[ownId].el.value
+            const currCmd = apps[ownId].el?.value ?? ''
             localStorage.setItem('match:initial', currCmd)
         }
     ],
@@ -21,6 +21,6 @@ createBrowserApp({
         }
     },
     init: (ownId) => {
-        apps[ownId].el.value = localStorage.getItem('match:initial') || ''
+        if (apps[ownId].el) apps[ownId].el!.value = localStorage.getItem('match:initial') || ''
     }
 })
