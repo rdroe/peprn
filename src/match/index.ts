@@ -9,7 +9,7 @@ const cm: Module = {
             'r (right)': 'comparison value'
         },
     },
-    fn: async function match(_, y: {
+    fn: async function match(_, _y: {
 
         [childNamespace: string]: Promise<any>
     }) {

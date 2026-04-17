@@ -28,7 +28,9 @@ export const history: Module = {
             fn: async (_, __, appId, apps: CliApps) => {
                 if (!appId || typeof appId !== 'string') return "Argument appId is required and must be a string"
 
-                const storedHistIds = (await histDb.history.where('cliId').equals(appId).toArray()).map(({ id }) => id)
+                const storedHistIds = (await histDb.history.where('cliId').equals(appId).toArray())
+                    .map(({ id }) => id)
+                    .filter((id): id is number => id !== undefined)
 
                 const deletion = await histDb.history.bulkDelete(storedHistIds)
                 apps[appId].historyData = []
@@ -58,8 +60,7 @@ export const ignoreIfStartingWith = (cli: string) => {
 
 const doIgnore = (cli: string) => {
     const ret = historyIgnore.some((ignore) => cli.startsWith(ignore))
-    // @ts-ignore
-    if (window.DEBUG) {
+    if ((window as Window & { DEBUG?: boolean }).DEBUG) {
         console.log('doIgnore', ret, cli)
     }
     return ret
@@ -68,10 +69,12 @@ export const earlySaveHistory = async (apps: CliApps, id: string, val: string) =
     const inclusible = !val.includes('--peprn:automated true')
     if (val && doIgnore(val) === false) {
         if (inclusible || apps[id].rememberAutomated) {
-            if (apps[id].historyData[apps[id].historyData.length - 1] !== val) {
-                apps[id].historyData.push(val)
-                apps[id].histCursor = apps[id].historyData.length
-                addHistory(id, val)
+            if (apps[id]?.historyData) {
+                if (apps[id].historyData[apps[id].historyData.length - 1] !== val) {
+                    apps[id].historyData.push(val)
+                    apps[id].histCursor = apps[id].historyData.length
+                    addHistory(id, val)
+                }
             }
         }
     }
@@ -80,44 +83,40 @@ export const makeHistory = async (apps: CliApps, id: string): Promise<CliApp['hi
 
     if (!apps[id].historyData) {
         const storedHist = (await histDb.history.where('cliId').equals(id).toArray())
-        const texts = storedHist.map(({ text }) => text) || []
-        apps[id].historyData = texts
-
+        apps[id].historyData = storedHist.map(({ text }) => text)
     }
 
-    apps[id].histCursor = apps[id].historyData.length // cursor beyond end
+    // historyData and histCursor are guaranteed set from here on; el is set by the
+    // framework before any key handler fires.
+    const app = apps[id] as CliApp & { historyData: string[]; histCursor: number; el: HTMLTextAreaElement }
+    app.histCursor = app.historyData.length // cursor beyond end
 
     return async (key: KeyboardEvent, evalResponse: EvalInteraction = 'not-called') => {
 
         if (evalResponse === 'called') {
 
-            apps[id].histCursor = apps[id].historyData.length // cursor beyond end
-            const val = cleanHistory(apps[id].el.value)
+            app.histCursor = app.historyData.length // cursor beyond end
+            const val = cleanHistory(app.el?.value)
             earlySaveHistory(apps, id, val)
 
         } else if (key.key === 'ArrowDown' && key.altKey) {
+            if (typeof app.historyData[app.histCursor + 1] === 'string') {
+                app.histCursor += 1
+                app.el.value = app.historyData[app.histCursor]
 
-            let did = false
-            if (typeof apps[id].historyData[apps[id].histCursor + 1] === 'string') {
-                did = true
-                apps[id].histCursor += 1
-                apps[id].el.value = apps[id].historyData[apps[id].histCursor]
-
-            } else if (typeof apps[id].historyData[apps[id].histCursor + 1] === 'undefined') {
+            } else if (typeof app.historyData[app.histCursor + 1] === 'undefined') {
 
                 // if on last item
-                if (typeof apps[id].historyData[apps[id].histCursor] === 'string') {
-                    did = true
-                    apps[id].histCursor += 1
-                    apps[id].el.value = ''
+                if (typeof app.historyData[app.histCursor] === 'string') {
+                    app.histCursor += 1
+                    app.el.value = ''
                 }
             }
 
-
         } else if (key.key === 'ArrowUp' && key.altKey) {
-            if (undefined !== apps[id].historyData[apps[id].histCursor - 1]) {
-                apps[id].histCursor -= 1
-                apps[id].el.value = apps[id].historyData[apps[id].histCursor]
+            if (undefined !== app.historyData[app.histCursor - 1]) {
+                app.histCursor -= 1
+                app.el.value = app.historyData[app.histCursor]
             }
         }
     }

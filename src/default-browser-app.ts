@@ -1,8 +1,4 @@
-import { Modules, Module } from './util/types'
 import { CliApp } from './evaluator'
-
-const outputSelector = (id: string) => `#${id}-out`
-const elSelector = (id: string) => `#${id}`
 
 const addDefaultCss = () => {
     const head = document.head || document.getElementsByTagName('head')[0];
@@ -49,9 +45,6 @@ div.peprn-default-out {
 
 export function conditionallyAddBrowserDefault(id: string, appsSingleton: { [id: string]: CliApp }) {
 
-
-    const selector = elSelector(id);
-    const dataSel = outputSelector(id);
 
     const body = document.body || document.getElementsByTagName('body')[0];
     if (!appsSingleton[id].el) {    

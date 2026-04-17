@@ -56,7 +56,7 @@ const allPriorPromises = (n: number) => {
     return priorCalls(n).map(({ promise }) => promise)
 }
 
-const cliCommandFromUnknown = async (cliCalled: CliCalled, commandOrString: string | Function): Promise<string> => {
+const cliCommandFromUnknown = async (cliCalled: CliCalled, commandOrString: string | ReplaceFunctionArg): Promise<string> => {
 
     if (typeof commandOrString === 'string') return commandOrString
 

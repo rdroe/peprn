@@ -1,9 +1,9 @@
-import { getMatchingModules, parse, ParsedCli, yargsOptions } from './util/cliParser'
+import { getMatchingModules, parse, ParsedCli } from './util/cliParser'
 import awaitAll from './util/awaitAll'
 import match from './match'
 import { Modules, Module } from './util/types'
 import { z } from 'zod'
-import { isNode, PEPRN_AUTO_TRUE, PEPRN_MULTILINE, PEPRN_MULTILINE_INDEX, PEPRN_MULTILINE_TOTAL, PEPRN_MULTILINE_TRUE } from './util'
+import { isNode, PEPRN_AUTO_TRUE, PEPRN_MULTILINE_INDEX, PEPRN_MULTILINE_TOTAL, PEPRN_MULTILINE_TRUE } from './util'
 
 export const shared: {
     queue: string[]
@@ -13,7 +13,6 @@ export const shared: {
 
 let apps: CliApps | null = null
 const regexGetLineNumber = /peprn\:multilineIndex\s([0-9]{1,3})/;
-const regexGetProgramSize = /peprn\:multilineTotal\s([0-9]{1,3})/;
 const parseLine = (line: string): number => {
     const parse = line.match(regexGetLineNumber)
     if (!parse || !parse[1]) return -99
@@ -22,12 +21,6 @@ const parseLine = (line: string): number => {
 
 const isCallForManual = (inp: string) => {
     return inp.split(' ').includes('--man')
-}
-
-const parseLineForProgramSize = (line: string): number => {
-    const parse = line.match(regexGetProgramSize)
-    if (!parse || !parse[1]) return 0
-    return parseInt(parse[1])
 }
 
 export const fakeCli = async (rawInput: string, appId: string = 'cli', isInternal = false) => {
@@ -39,7 +32,7 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli', isInterna
         : `${rawInput} ${PEPRN_AUTO_TRUE}`.replace(/\s\s+/g, ' ').trim()
 
     const ownLineIndex = parseLine(rawIn)
-    const toAwait = Object.entries(apps[appId].dataWait || {}).filter(([cli, prom]) => {
+    const toAwait = Object.entries(apps[appId].dataWait || {}).filter(([cli]) => {
         if (typeof ownLineIndex !== 'number') return false
         const lineIdx = parseLine(cli)
         if (lineIdx !== null && !isNaN(lineIdx)) {
@@ -66,7 +59,7 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli', isInterna
 
         const calls = await apps[appId].dataWait[rawInTrimmed]
         const keys = Object.keys(calls)
-        let longest = keys.reduce((accum, key) => {
+        const longest = keys.reduce((accum, key) => {
             return key.length > accum.length ? key : accum
         }, '')
         return calls[longest]
@@ -298,7 +291,7 @@ export const makeRunner = (
 
                 const successiveCalls: { [modName: string]: Promise<unknown> } = {}
                 let resolveAllCalled: () => void = () => { }
-                let allCalledProm: Promise<void> = new Promise((res) => {
+                const allCalledProm: Promise<void> = new Promise((res) => {
                     resolveAllCalled = res
                 })
 
@@ -417,9 +410,6 @@ function multilinePreprocessor(snt: string): string | null {
         throw new Error(`Do not include quotation marks`);
     }
     if (snt.includes('\n')) {
-        const nth = PEPRN_MULTILINE_INDEX
-        const mlTrue = PEPRN_MULTILINE_TRUE
-        const mlTot = PEPRN_MULTILINE_TOTAL
         const sntsSplit = snt.trim().split('\n')
 
         const sntsProcessed = sntsSplit.map((userLine, idx): string => {
@@ -438,7 +428,7 @@ function multilinePreprocessor(snt: string): string | null {
         const snt1 = snts.shift();
 
 
-        shared.queue.push(...snts.map((userLine, idx) => {
+        shared.queue.push(...snts.map((userLine) => {
             return userLine
         }));
         const call = snt1

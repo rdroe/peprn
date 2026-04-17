@@ -129,7 +129,7 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
             const [newCursOptName, newCursOpt] = newCursOptNameEntry
 
             // it's cheap to simply re-obtain the alias in cases where user used it.
-            let newCursAlias = newCursOpt.alias ?? null
+            const newCursAlias = newCursOpt.alias ?? null
 
             if (newCursOpt.type === 'bool' || newCursOpt.type === 'boolean') {
                 const ret = {
@@ -170,7 +170,7 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
             }
             const parsed = single.parse(curr)
             const newVal: z.infer<typeof single> = parsed
-            const currValuation = Object.entries(accum).find(([optName, currVal]) => {
+            const currValuation = Object.entries(accum).find(([optName, _currVal]) => {
 
                 if (temp.cursor[0].includes(optName)) {
 
@@ -182,7 +182,7 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
             })
 
             if (opt.array) {
-                let currArr = currValuation ? currValuation[1] : []
+                const currArr = currValuation ? currValuation[1] : []
                 if (!Array.isArray(currArr)) throw new Error(`Valuation of an array:true option should be an array at all times`)
                 nms.forEach((optName: string) => {
                     ret[optName] = [
@@ -257,7 +257,7 @@ export const getMatchingModules = (moduleObj: Modules | null) => (str: string): 
 
     if (!moduleObj) return
     const asArgs = stringArgv(str)
-    let modulesAndSubmodules: Module[] = []
+    const modulesAndSubmodules: Module[] = []
     let curs: string | number | undefined = asArgs.shift()
     let currSubmodules = moduleObj
     while (curs && (currSubmodules[curs] || currSubmodules['$'])) {

@@ -10,10 +10,6 @@ const genericDataHandler: DataHandler = async (_, data, appId) => {
     return data
 }
 
-let nodeReplOpts: ReplOptions
-
-let nodeRepl: REPLServer
-
 export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunner>) => {
 
     const { id } = opts
@@ -29,7 +25,7 @@ export const createApp = async (opts: Opts, runner?: ReturnType<typeof makeRunne
 
         const xProm = (new Function(`return import('node:repl')`)()) as Promise<{
             default: {
-                start: ((opts: typeof nodeReplOpts) => typeof nodeRepl)
+                start: ((opts: ReplOptions) => REPLServer)
 
             }
         }>

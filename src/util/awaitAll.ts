@@ -18,8 +18,8 @@ export default async function awaitAll<T = any>(allProperties: {
     [numOrString: string]: any,
 }): Promise<T> {
 
-    let props: string[] = []
-    let vals: Promise<any>[] = []
+    const props: string[] = []
+    const vals: Promise<any>[] = []
     Object.entries(allProperties).forEach(([p, v]) => {
         if (isProm(v)) {
             vals.push(v)

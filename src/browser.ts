@@ -8,8 +8,7 @@ export * from './util/react-utils'
 export { earlySaveHistory, cleanHistory, historyIgnore, ignoreIfStartingWith } from './browser-default-history'
 export const apps: { [id: string]: CliApp } = {}
 
-const makeFinalCallback = (id: string, res: Function) => async (err: null | Error, result: any) => {
-    // @ts-ignore
+const makeFinalCallback = (id: string, res: (value: unknown) => void) => async (err: null | Error, result: any) => {
     if (err) throw new Error(`Error intercepted; `, err)
     res(result)
     apps[id].restarter = makeProm(id)

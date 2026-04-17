@@ -5,7 +5,7 @@ export function isNode() {
     try {
         const fn = new Function("try { return window.document === undefined } catch(e) { return true; }")
         return fn()
-    } catch (e) {
+    } catch {
         return false
     }
 }
@@ -55,7 +55,7 @@ export const parseable = z.string().refine((val: string) => {
     try {
         JSON.parse(val)
         return true
-    } catch (e) {
+    } catch {
         return false
     }
 })

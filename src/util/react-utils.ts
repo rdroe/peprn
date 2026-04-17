@@ -1,8 +1,6 @@
 import React from 'react'
 import { ArgsMatcher, argsMatchers, createBrowserApp, DataHandler } from '../index';
 import { apps } from '../browser';
-import { cleanHistory, earlySaveHistory } from '../browser-default-history';
-import { PEPRN_AUTO_TRUE } from '../util';
 import { fakeCli as fakeCliFn } from '../evaluator'
 
 type DataHandlerReactCallback = DataHandler
