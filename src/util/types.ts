@@ -1,5 +1,6 @@
 import { CliApps } from "../evaluator"
 import { ParsedCli } from "./cliParser"
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ModuleFn<ArgFormat extends ParsedCli = ParsedCli, Ret = unknown> = (args: ArgFormat, childCalls?: any, appId?: string, appsSingleton?: CliApps) => Promise<Ret>
 export interface Module<ArgFormat extends ParsedCli = ParsedCli, Ret = unknown> {
     help?: ModuleHelp
@@ -13,10 +14,12 @@ export interface Module<ArgFormat extends ParsedCli = ParsedCli, Ret = unknown> 
         }
     }
     submodules?: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         [subcommand: string]: Module<any, any>
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Modules<ModuleNames extends string | number | symbol = any> = Record<ModuleNames, Module>
 
 

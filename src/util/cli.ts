@@ -21,10 +21,12 @@ interface CliCalled extends Api {
     commands: Command[]
 }
 
-const isPromise = <T = any>(arg: any): arg is Promise<T> => {
-    return (typeof arg.then === 'function'
-        && typeof arg.catch === 'function'
-        && typeof arg.finally === 'function'
+const isPromise = <T = unknown>(arg: unknown): arg is Promise<T> => {
+    if (typeof arg !== 'object' || arg === null) return false
+    const rec = arg as Record<string, unknown>
+    return (typeof rec.then === 'function'
+        && typeof rec.catch === 'function'
+        && typeof rec.finally === 'function'
     )
 }
 const stack: CliCalled[] = []

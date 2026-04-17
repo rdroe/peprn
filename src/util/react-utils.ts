@@ -69,6 +69,7 @@ const useAppsInitted = (ids: string[], addId: (inittedId: string) => void) => {
 
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const useOnAppsInitted = (requiredIds: string[], fn: (...args: any[]) => void) => {
 
     const [ran, setRan] = React.useState(false)

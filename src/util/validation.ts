@@ -21,9 +21,10 @@ export const num = z.number().or(z.string().refine((val: string) => {
     return parseFloat(val)
 })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const allNum = (arg: any[]): boolean => {
     let anyIsUndefined = false
-    const firstNonNum = arg.find((anArg: any) => {
+    const firstNonNum = arg.find((anArg) => {
         if (!anyIsUndefined) {
             anyIsUndefined = (anArg === undefined)
         }
@@ -35,6 +36,7 @@ export const allNum = (arg: any[]): boolean => {
     return false
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const allToNum = (arg: any[]): number[] => {
     return arg.map((anArg) => {
         const num1 = num.parse(anArg)

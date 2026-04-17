@@ -40,6 +40,7 @@ export type ParsedCli = {
     'commands': string[]
     'c:n': string[]
     'names': string[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     temp?: any
     moduleNames: string[]
     [optName: string]: ParsedArg
@@ -217,7 +218,7 @@ export const parse = (modules: Modules, rawIn: string | string[]): ParsedCli => 
                 if (undefined === ret[optName]) {
                     ret[optName] = newVal
                 } else {
-                    ret[optName] = Array.isArray(ret[optName]) ? [...ret[optName] as any[], newVal] : [ret[optName], newVal]
+                    ret[optName] = Array.isArray(ret[optName]) ? [...(ret[optName] as (string | number | boolean)[]), newVal] : [ret[optName], newVal]
                 }
             })
 

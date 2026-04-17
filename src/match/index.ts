@@ -11,7 +11,7 @@ const cm: Module = {
     },
     fn: async function match(_, _y: {
 
-        [childNamespace: string]: Promise<any>
+        [childNamespace: string]: Promise<unknown>
     }) {
         return 
     },

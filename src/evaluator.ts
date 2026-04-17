@@ -68,6 +68,7 @@ export const fakeCli = async (rawInput: string, appId: string = 'cli', isInterna
 };
 
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DataHandler = (args: ParsedCli, data: any, appId: string) => Promise<void>
 export type KeyHandler = (key: KeyboardEvent, appId: string) => Promise<void>
 export type Opts = {
@@ -87,7 +88,9 @@ export type Opts = {
 
 export type ZodStore = {
     [id: string | number]: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         typings: any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: any
     }
 }
@@ -104,6 +107,7 @@ export type CliApp = {
     histCursor?: number
     userEffects: DataHandler[]
     userKeyEffects: KeyHandler[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dataWait?: { [serial: string]: Promise<any> }
     rememberAutomated: boolean
 }
@@ -111,6 +115,7 @@ export type CliApp = {
 export type CliApps = { [id: string]: CliApp }
 export type EvalInteraction = 'called' | 'not-called'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CallReturn = (err: null | Error, success: any) => void
 export type ArgsMatcher = (parsedCli: ParsedCli) => boolean
 export const argsMatchers = new Map<DataHandler, ArgsMatcher>
@@ -162,7 +167,7 @@ const getHelpOutput = (matched: Module[], parsed: ParsedCli) => {
         return !!help
     })
 
-    let helpResults: any = "no help defined"
+    let helpResults: HelpOutput = "no help defined"
 
     if (modHelp[0]) {
         const examplePrefix = parsed.commands.join(' ')
@@ -188,7 +193,7 @@ export const makeRunner = (
     input: string,
     dataCallback: DataHandler,
     finalCallback: CallReturn
-) => Promise<any> /* end type definition for makeRunner return*/ => { // begin actual function definition
+) => Promise<any> /* eslint-disable-line @typescript-eslint/no-explicit-any */ /* end type definition for makeRunner return*/ => { // begin actual function definition
     apps = appsSingleton
     const { modules = { match }, id } = opts
     // Note: opts.multiLineDefaults is used both here and in browser.ts and node.ts (but not node, yet)
@@ -315,7 +320,7 @@ export const makeRunner = (
                             const resultProm = moduleFn(o === 0 ? {
                                 ...parsed2,
                                 'peprn:childmost': true
-                            } : parsed2, successiveCalls, id, appsSingleton).then(async (resolved: any) => {
+                            } : parsed2, successiveCalls, id, appsSingleton).then(async (resolved: unknown) => {
 
                                 if (!appsSingleton[id].dataWait) {
                                     appsSingleton[id].dataWait = {}

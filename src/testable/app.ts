@@ -18,6 +18,7 @@ createBrowserApp({
     catch: (e) => {
         console.error(`Caught ${e.message}`)
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dataHandler: async (parsedCli: ParsedCli, data: any, appId: string) => {
 
         const isAutomated = parsedCli[PEPRN_AUTO]
