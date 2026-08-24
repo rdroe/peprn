@@ -4,6 +4,7 @@ import { ensureDefaultUi } from './defaultUi.js'
 import { makeDefaultModules } from './defaultModules.js'
 import { bindDom, defaultBrowserDataHandler } from './dom.js'
 import { createLocalStorageHistory } from './history.js'
+import { attachGhost } from './ghost.js'
 
 export interface BrowserAppOptions extends AppOptions {
     useBrowserDefault?: boolean
@@ -82,11 +83,7 @@ export async function createBrowserApp(options: BrowserAppOptions): Promise<Brow
     })
 
     const unbind = bindDom(core, input, output, userKeyEffects ?? [])
-
-    // Seam for the sibling ghost packet (P21): once src/browser/ghost.ts exists,
-    // import { attachGhost } from './ghost.js' here, call it (unless
-    // options.completion === false) to get its detach function, and fold that
-    // detach call into dispose() below alongside `unbind`.
+    const detachGhost = restOptions.completion === false ? null : attachGhost(core, input)
 
     const app: BrowserApp = {
         get id() {
@@ -112,6 +109,7 @@ export async function createBrowserApp(options: BrowserAppOptions): Promise<Brow
         },
         dispose(): void {
             unbind()
+            detachGhost?.()
             if (injected) injected.remove()
             core.dispose()
         },
