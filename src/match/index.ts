@@ -9,11 +9,13 @@ const cm: Module = {
             'r (right)': 'comparison value'
         },
     },
-    fn: async function match(_, _y: {
+    fn: async function match(_, y: {
 
         [childNamespace: string]: Promise<unknown>
     }) {
-        return 
+        if (!y) return null
+        const childResults = await Promise.all(Object.values(y))
+        return childResults.flat().length
     },
     submodules: {
         scalar // child command

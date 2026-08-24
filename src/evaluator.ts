@@ -20,7 +20,7 @@ const parseLine = (line: string): number => {
 }
 
 const isCallForManual = (inp: string) => {
-    return inp.split(' ').includes('--man')
+    return inp.trim().split(' ').includes('--man')
 }
 
 export const fakeCli = async (rawInput: string, appId: string = 'cli', isInternal = false) => {
@@ -237,13 +237,33 @@ export const makeRunner = (
     return async (inputRaw: string, dataCallback: DataHandler, finalCallback: CallReturn) => {
         let parsed: ParsedCli | null = null
 
+        // Single place every failure funnels through, so finalCallback always fires
+        // exactly once and nothing escapes as an unhandled rejection.
+        const handleError = (e: unknown) => {
+            const asError = z.object({
+                message: z.string(),
+                name: z.string().optional()
+            }).safeParse(e)
+
+            const err: Error = asError.success
+                ? e as Error
+                : new Error(`Could not respond to ${inputRaw}; and what got thrown could not be duck-typed to an Error`, { cause: e })
+
+            if (opts.catch) {
+                opts.catch(err, inputRaw, parsed)
+                finalCallback(null, null)
+                return
+            }
+
+            finalCallback(err, null)
+        }
+
         try {
             const input = preprocessor!(inputRaw, id, appsSingleton)
+            // A blank line (or a preprocessor that opts out) is a no-op, not an error.
             if (input === null) {
-                throw ({
-                    name: "user input could not be processed",
-                    message: `raw user input lead to invalid processing (possibly pre-processing)`
-                })
+                finalCallback(null, null)
+                return
             }
 
             parsed = parse({ match, ...modules }, input)
@@ -308,6 +328,12 @@ export const makeRunner = (
                     const o = n
                     const moduleName = modNames[o]
 
+                    // modNames is childmost-first, so at this point successiveCalls holds
+                    // exactly this module's descendants. Snapshot it: handing a module the
+                    // live map would include its own promise and self-deadlock any module
+                    // that awaits its children (see match's parent fn).
+                    const childCalls = { ...successiveCalls }
+
                     // call all fns
                     successiveCalls[moduleName] = (
                         (async function peprnModuleLoop() {
@@ -323,7 +349,7 @@ export const makeRunner = (
                             const resultProm = moduleFn(o === 0 ? {
                                 ...parsed2,
                                 'peprn:childmost': true
-                            } : parsed2, successiveCalls, id, appsSingleton).then(async (resolved: unknown) => {
+                            } : parsed2, childCalls, id, appsSingleton).then(async (resolved: unknown) => {
 
                                 if (!appsSingleton[id].dataWait) {
                                     appsSingleton[id].dataWait = {}
@@ -363,7 +389,7 @@ export const makeRunner = (
 
                 const allData = awaitAll(successiveCalls).then((ad) => {
                     if (finalCallback) { return finalCallback(null, ad) }
-                })
+                }).catch(handleError)
 
                 if (!isNode()) {
                     await allData
@@ -377,28 +403,7 @@ export const makeRunner = (
 
 
         } catch (e: unknown) {
-            try {
-                const isError = z.object({
-                    message: z.string(),
-                    name: z.string().optional()
-                }).safeParse(e)
-
-                if (!isError) {
-                    throw e
-                }
-
-                if (opts.catch) {
-                    if (isError) {
-                        opts.catch(e as Error, inputRaw, parsed)
-                    }
-                    return
-                }
-
-                throw new Error(`Could not respond to ${inputRaw} (and peprn app ${opts.id} has no "catch" parametric property)`, { cause: e })
-
-            } catch (e) {
-                throw new Error(`Could not respond to ${inputRaw}; and what got thrown could not be duck-typed  to  an Error`, { cause: e })
-            }
+            handleError(e)
         }
     }
 }

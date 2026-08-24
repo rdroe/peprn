@@ -31,6 +31,15 @@ Result should look like
 }
 ```
 
+The example also runs under bun:
+
+`bun dist/testable/node/index.js`
+
+(bun ships `node:repl` as a stub, so peprn falls back to a `node:readline` prompt there; output is formatted by bun's inspector but the results are the same.)
+
+### Run the tests
+`yarn test` runs the unit specs plus, when `dist/` has been built, a set of integration specs that drive the built repl as a subprocess. Set `PEPRN_TEST_BUN=1` to run those against bun as well.
+
 ### Generate and run the react example
 This utility also has basic react bindings. Like everything else, these yet lack documentation, but you can easily generate a running example.
 
