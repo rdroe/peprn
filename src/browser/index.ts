@@ -107,8 +107,8 @@ export async function createBrowserApp(options: BrowserAppOptions): Promise<Brow
         run(text: string, opts?: RunOptions): Promise<RunReport> {
             return core.run(text, opts)
         },
-        complete(input: string, cursor?: number) {
-            return core.complete(input, cursor)
+        complete(text: string, cursor?: number) {
+            return core.complete(text, cursor)
         },
         dispose(): void {
             unbind()

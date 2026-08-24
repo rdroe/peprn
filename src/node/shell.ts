@@ -91,7 +91,11 @@ export function startShell(
 
     rl.on('line', (line: string) => {
         if (hasContinuation(line)) {
-            buffer += line.slice(0, -1) + '\n'
+            // Joined directly (no separator inserted): continuation composes ONE
+            // logical program line across several readline lines, so the result
+            // must still tokenize as a single task -- an inserted '\n' would hand
+            // buildProgram two physical lines instead.
+            buffer += line.slice(0, -1)
             rl.setPrompt('... ')
             rl.prompt()
             return
