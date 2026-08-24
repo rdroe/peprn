@@ -36,6 +36,10 @@
     "./match": {
       "types": "./dist/modules/match/index.d.ts",
       "default": "./dist/modules/match/index.js"
+    },
+    "./dom": {
+      "types": "./dist/modules/dom/index.d.ts",
+      "default": "./dist/modules/dom/index.js"
     }
   },
   "peerDependencies": {

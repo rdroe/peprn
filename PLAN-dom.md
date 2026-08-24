@@ -171,7 +171,22 @@ and quoting would break `ghostRemainder`'s proper-prefix rule (PLAN.md P21).
 
 `matchStrength(q, v, exact)` on normalized strings — take the highest tier:
 equality **1.0** · `v.startsWith(q)` **0.9** · word-prefix **0.85** · substring
-**0.75** · `dice(q,v) ≥ 0.34` (unless `--exact`) → **dice × 0.7** · else 0.
+**0.75** · `dice ≥ 0.34` (unless `--exact`) → mapped onto the fuzzy band
+**[0.32, 0.74]** · else 0, where `dice` is the best coefficient over the whole
+value and over each of its words.
+
+Both of those differ from this plan's first draft (`dice × 0.7`, whole-string
+only), which was corrected during implementation:
+
+- Whole-string dice lets extra words in a label bury a typo of the word actually
+  typed: `dice("sumbit", "submit order") = 0.25` versus `0.40` against `"submit"`
+  alone, so the longer label scored *worse* than the bare word. Per-word scoring
+  removes that penalty.
+- A flat `× 0.7` made the stated `0.34` gate misleading rather than wrong: the
+  real floor was `0.3 / 0.7 = 0.43` (0.45 against a `text` source), so dice in
+  `[0.34, 0.45)` was admitted by the gate and then silently dropped by the 0.3
+  threshold. The band maps the admissible range onto scores that can actually
+  survive, while staying under the substring tier.
 
 Source weights: label **1.0**, aria **0.98**, text **0.95**, placeholder **0.9**,
 value **0.85**, title **0.8**, alt **0.8**, testid **0.75**.
@@ -242,12 +257,18 @@ the constructor exists, else `MouseEvent`; coordinates = rect center.
 - **type** `<target> <text>` (single positional = text, target = `activeElement` if it
   is a text control, else a friendly error): focus via click seq; per char `keydown →
   keypress (printable) → beforeinput (InputEvent, insertText) → nativeSetValue(el,
-  el.value + ch) → input (InputEvent) → keyup`; `--delay <ms>` between chars; `change`
-  once at end if the value changed (`--change false` to suppress) — a deliberate
+  accumulatedTextSoFar) → input (InputEvent) → keyup`; `--delay <ms>` between chars;
+  `change` once at end if the value changed (`--change false` to suppress) — a deliberate
   fidelity deviation from user-event's blur-only timing: programmatic sets never dirty
   the browser's change tracking, so vanilla `change` listeners would otherwise never
   fire; React is already served by the `input` events. No `{enter}` DSL — that is
-  `press`'s job (documented in help).
+  `press`'s job (documented in help). Two implementation corrections to this spec:
+  the accumulator must live OUTSIDE the element (reading `el.value` back loses
+  everything typed on `input[type=number|date|time|month|week|datetime-local]`,
+  whose value sanitizers coerce every invalid intermediate prefix to `''`), and
+  `--change` must not be declared `type: 'boolean'` (the core parser treats boolean
+  options as bare flags and never consumes a following value, so `--change false`
+  would set it true and type the word "false" into the field).
 - **clear**: focus; `beforeinput (deleteContentBackward)` → `nativeSetValue(el, '')` →
   `input` → `change`.
 - **select** `<target> <option query>`: resolve among `el.options` — exact text → exact
