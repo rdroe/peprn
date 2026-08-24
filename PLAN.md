@@ -1,5 +1,46 @@
 # peprn v1.0.0 — ground-up rewrite plan
 
+## EXECUTION STATUS (resume point)
+
+Execution began, then plan mode re-engaged mid-Phase-0. Current repo state:
+
+- Branch **`v1`** created and checked out (branched from `160c728` on `main`).
+- **Teardown DONE**: 50 files staged as deletions — old `src/`, `examples/`,
+  `public/`, `build.js`, root `index.html`, `jest.config.js`, `tsconfig.test.json`,
+  `tsconfig.json`. Uncommitted.
+- Empty directory skeleton created: `src/{core,node,browser,react,modules/match}`,
+  `examples/{node,browser,react-generator}`, `scripts`, `test/{fixtures,integration}`.
+- **No source files written yet.** Phase 0's contracts (`core/types.ts`,
+  `core/errors.ts`) and infra (`package.json`, tsconfigs,
+  `scripts/build-examples.mjs`) are still to do.
+- Survivors in the working tree: `package.json` (still 0.4.21), `README.md` (still
+  0.4.x), `PLAN.md`, `LICENSE`, `eslint.config.mjs`, `yarn.lock`, `node_modules/`.
+- **Nothing is lost**: `main` is untouched at `160c728`. Recover with
+  `git checkout main`, or `git checkout -- .` on `v1`.
+
+**Resume from Phase 0 step 2** (write P0 contracts + P16 infra), then Phase 1's
+18-agent fan-out.
+
+### Execution decisions (settled at resume)
+
+- **Repo dev tooling: npm.** Delete `yarn.lock`, `.yarnrc.yml`, `.yarn/`. The
+  *published package* stays package-manager agnostic — that is a property of the
+  artifact, not the dev tool, and the v1.0.0 sketch already guarantees it: an
+  `exports` map with conditions, `files: ["dist"]` (no lockfile shipped), **no**
+  install/prepare lifecycle scripts, and `engines` naming node only (drop 0.4.x's
+  `"yarn": ">=2.0.0"` engine). Consumers install with npm, yarn, pnpm, or bun
+  identically. The react generator shells `npm pack`/`npm install` because it
+  scaffolds a throwaway demo, not because the library requires npm.
+- **ESLint: dropped entirely.** Delete `eslint.config.mjs`; no eslint or
+  typescript-eslint devDeps. `strict` TypeScript is the only static gate — one
+  fewer failure mode across 18 parallel agents.
+- **Phase 2 autonomy: run to green.** Iterate ordered verification + per-packet fix
+  agents without checkpointing; report once at the end. Stop early and report only
+  if a failure indicates the *spec* is wrong rather than an implementation.
+- **Browser smoke: driven via chrome-devtools.** Serve the example, type commands,
+  screenshot the ghost overlay and the man HTML page, confirm localStorage history
+  survives reload — so the two new visual features ship verified, not assumed.
+
 ## Context
 
 peprn 0.4.x (parse/evaluate/print/repeat nested subcommands, node + browser) works —
@@ -1136,4 +1177,23 @@ verbatim from actual node output; must keep the exact shape
 }
 ```
 
-No `dependencies` key at all; no `main`; no `typesVersions`.
+No `dependencies` key at all; no `main`; no `typesVersions`; no eslint; no
+install/prepare lifecycle scripts (so `npm|yarn|pnpm|bun install` of the published
+package are equivalent); `engines` names node only.
+
+## Verification of the finished v1 (end-to-end)
+
+1. `npm install && npm run build` — exits 0; all five entry points emit `.js` + `.d.ts`;
+   `examples/browser/bundle.js` built and react-free (the build script fails otherwise).
+2. `npm test` — full `node --test` suite: every packet's units plus the subprocess
+   REPL integration tests, run against **node and bun**, with the README transcript
+   pinned byte-for-byte.
+3. `bun examples/node/index.mjs` — manual parity spot-check of the readline shell,
+   Tab completion, and `man`.
+4. Browser: `npm run serve`, then drive Chrome to confirm ghost text completes `mat`→
+   `match`, `@`-handles complete after `as`, `man match` renders linked HTML,
+   `hideOutput`/`showOutput` toggle, Alt+↑ recalls, and history survives reload.
+5. `node examples/react-generator/generate.mjs --dir <tmp> --dry-run` — exits 0 with the
+   `DRY:` action list; the non-`--force` guard on a non-empty dir exits 1.
+6. `git diff --stat main..v1` — confirms the old tree is gone and no 0.4.x file survives
+   unintentionally.

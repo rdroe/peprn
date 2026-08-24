@@ -1,30 +1,15 @@
 {
     "compilerOptions": {
-	"module": "commonjs",
-	"esModuleInterop": true,
-	"moduleResolution": "node",
-        "allowSyntheticDefaultImports": true,
-	"noImplicitAny": true,
-	"strictNullChecks": true,
-	"removeComments": true,
-	"preserveConstEnums": true,
-	"outDir": "dist/",
-	"declaration": true,
-	"allowJs": true,
-	"lib": ["dom", "es2022"],
-        "target": "esnext",
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "lib": ["ES2022", "DOM"],
+        "strict": true,
+        "declaration": true,
         "skipLibCheck": true,
-        "composite": true,
-        "rootDir": "./src/",
-        "baseUrl": "./src/",
-        "inlineSourceMap": true
-    },
-    "include": [
-	"./src"
-    ],
-    "exclude": [
-        "node_modules",
-        "**/*.spec.ts",
-        "../server"
-    ]
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "verbatimModuleSyntax": false,
+        "jsx": "react"
+    }
 }
