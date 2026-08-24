@@ -1,0 +1,15 @@
+// Public core entry point: shared contracts + every core building block.
+export * from './types.js'
+export * from './errors.js'
+
+export { createApp } from './app.js'
+export { buildProgram } from './program.js'
+export { tokenizeLine } from './tokenizer.js'
+export { parseLine, walkStem } from './parser.js'
+export { injectArgs, runProgram } from './scheduler.js'
+export { HandleRegistry } from './handles.js'
+export { getHelp } from './help.js'
+export { executeChain } from './engine.js'
+export { complete } from './complete.js'
+export { buildManPage, buildManIndex, renderManText, makeManModule } from './man.js'
+export { createMemoryHistory, createHistorySession, makeHistoryModule } from './history.js'
