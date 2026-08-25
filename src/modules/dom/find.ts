@@ -2,7 +2,9 @@ import type { Module } from '../../core/types.js'
 import type { MatchRow, RankSpec, Role, Source } from './types.js'
 import { ROLES } from './types.js'
 import { rankCandidates } from './rank.js'
-import { beginVerb, extractCandidates } from './extract.js'
+import { beginVerb, extractCandidates, invalidateCandidates } from './extract.js'
+import { waitForOptions } from './resolve.js'
+import { pollUntil } from '../async/poll.js'
 import { candidateNames, inBrowser } from './completions.js'
 import { resolveRef } from './registry.js'
 import { clearOverlay, getOrCreateOverlay } from './overlay.js'
@@ -19,6 +21,9 @@ const NARROWING_SOURCES: readonly Source[] = ['label', 'placeholder', 'text', 't
 
 const strOpt = (v: unknown): string | undefined => (v === undefined ? undefined : String(v))
 const numOpt = (v: unknown): number | undefined => (v === undefined ? undefined : Number(v))
+/** `--waitfor` arrives as `true` when bare (the parser's valueless-flag rule) or a number when given a timeout. */
+const waitForOpt = (v: unknown): number | true | undefined =>
+    v === undefined ? undefined : v === true ? true : Number(v)
 
 /** Same "closest guesses" message shape as `resolve.ts`'s `implicitFind` — kept local so this file only depends on already-landed phase 2 exports, not an extra one. */
 const guessMessage = (query: string, guesses: MatchRow[]): string => {
@@ -71,10 +76,15 @@ const find: Module<MatchRow[]> = {
         exact: { alias: 'x', type: 'boolean', describe: 'exact normalized match only (no fuzzy)' },
         quiet: { alias: 'q', type: 'boolean', describe: 'skip the onscreen pointer' },
         clear: { type: 'boolean', describe: 'clear the overlay; alone (no query) just clears and returns []' },
-        limit: { type: 'number', describe: 'max rows (default 5; --all uses 25)' }
+        limit: { type: 'number', describe: 'max rows (default 5; --all uses 25)' },
+        waitfor: {
+            alias: 'w',
+            type: 'number',
+            describe: 'retry until something matches instead of failing immediately; optional timeout in ms (default 5000)'
+        }
     },
 
-    fn: (ctx) => {
+    fn: async (ctx) => {
         // constraint 4: guard first, unconditionally — some paths below (e.g.
         // `--clear` alone, when no overlay has ever been created for this app)
         // would otherwise reach no DOM API at all and silently no-op in node.
@@ -112,10 +122,32 @@ const find: Module<MatchRow[]> = {
             limit
         }
 
-        const candidates = extractCandidates(appId)
-        const { matches, guesses } = rankCandidates(candidates, spec)
+        const rankOnce = (): MatchRow[] => {
+            const { matches, guesses } = rankCandidates(extractCandidates(appId), spec)
+            if (matches.length === 0) throw new Error(guessMessage(query, guesses))
+            return matches
+        }
 
-        if (matches.length === 0) throw new Error(guessMessage(query, guesses))
+        // `--waitfor` polls the same ranking rather than a separate code path,
+        // so a wait matches exactly what a plain `find` would have returned.
+        // The cache is dropped between attempts; without that every retry
+        // inside one 300ms window re-reads the same snapshot.
+        const waiting = waitForOptions(waitForOpt(opts.waitfor))
+        let matches: MatchRow[]
+        if (waiting) {
+            let first = true
+            matches = await pollUntil(
+                () => {
+                    if (first) first = false
+                    else invalidateCandidates(appId)
+                    return rankOnce()
+                },
+                query === '' ? 'a match' : `"${query}"`,
+                waiting
+            )
+        } else {
+            matches = rankOnce()
+        }
 
         if (opts.quiet !== true) {
             // Defensive: extractCandidates only serves a cache entry whose

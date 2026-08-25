@@ -40,6 +40,10 @@
     "./dom": {
       "types": "./dist/modules/dom/index.d.ts",
       "default": "./dist/modules/dom/index.js"
+    },
+    "./async": {
+      "types": "./dist/modules/async/index.d.ts",
+      "default": "./dist/modules/async/index.js"
     }
   },
   "peerDependencies": {

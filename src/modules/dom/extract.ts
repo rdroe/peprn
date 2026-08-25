@@ -54,6 +54,19 @@ export function beginVerb(ctx: { app: { id: string } }): string {
 
 const cache = new Map<string, { at: number; rows: Candidate[]; els: Element[] }>()
 
+/**
+ * Drop the cached extraction for one app.
+ *
+ * Required by every polling caller (`--waitfor`, the `waitfor` verb): the
+ * 300ms TTL exists to keep per-keystroke completion cheap, but a poll loop
+ * running every 100ms would otherwise re-read the same frozen snapshot three
+ * times and conclude nothing had changed — the cache would hide the very
+ * mutation being waited for.
+ */
+export function invalidateCandidates(appId: string): void {
+    cache.delete(appId)
+}
+
 const collapse = (s: string): string => s.trim().replace(/\s+/g, ' ')
 const truncate = (s: string, max: number): string => (s.length > max ? s.slice(0, max) : s)
 const shorten = (s: string): string | undefined => {

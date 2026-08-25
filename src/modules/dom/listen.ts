@@ -266,6 +266,10 @@ function dedupe(items: string[]): string[] {
 const strOpt = (v: unknown): string | undefined => (v === undefined ? undefined : String(v))
 const numOpt = (v: unknown): number | undefined => (v === undefined ? undefined : Number(v))
 
+/** `--waitfor` arrives as `true` when bare (the parser's valueless-flag rule) or a number when given a timeout. */
+const waitForOpt = (v: unknown): number | true | undefined =>
+    v === undefined ? undefined : v === true ? true : Number(v)
+
 // ---------- on ----------
 
 /** the same targeting knobs act.ts's verbs carry, duplicated locally rather than imported — see the file-top note on staying self-contained. */
@@ -284,7 +288,12 @@ const TARGETING_OPTIONS: Record<string, OptionSpec> = {
     near: { type: 'string', describe: 'rank the implicit-find target nearer to this anchor text' },
     exact: { alias: 'x', type: 'boolean', describe: 'exact normalized match only for the implicit-find target (no fuzzy)' },
     nth: { alias: 'n', type: 'number', describe: 'pick the Nth ranked match for the implicit-find target (1-based)' },
-    quiet: { alias: 'q', type: 'boolean', describe: 'skip the onscreen pointer flash' }
+    quiet: { alias: 'q', type: 'boolean', describe: 'skip the onscreen pointer flash' },
+    waitfor: {
+        alias: 'w',
+        type: 'number',
+        describe: 'retry until the target appears instead of failing immediately; optional timeout in ms (default 5000)'
+    }
 }
 
 const TARGETING_HELP: Record<string, string> = Object.fromEntries(
@@ -298,7 +307,8 @@ function buildResolveOpts(opts: Record<string, unknown>, consumesRest = false): 
         exact: opts.exact === true,
         nth: numOpt(opts.nth),
         quiet: opts.quiet === true,
-        consumesRest
+        consumesRest,
+        waitFor: waitForOpt(opts.waitfor)
     }
 }
 
@@ -323,11 +333,11 @@ export const on: Module<SubRow[]> = {
         live: { type: 'boolean', describe: 'also append one line per observed event to the visible output, best-effort' },
         once: { type: 'boolean', describe: 'auto-off this subscription after its first observed event' }
     },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const appId = ctx.app.id
         const opts = ctx.args.options
-        const { ref, el, rest } = resolveTarget(ctx, buildResolveOpts(opts, true))
+        const { ref, el, rest } = await resolveTarget(ctx, buildResolveOpts(opts, true))
 
         const fromOption = Array.isArray(opts.event) ? opts.event.map(String) : []
         const merged = dedupe([...rest, ...fromOption])
@@ -360,7 +370,7 @@ export const off: Module<{ off: string }[]> = {
     options: {
         all: { type: 'boolean', describe: 'remove every live subscription instead of specific ones' }
     },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const appId = ctx.app.id
 
@@ -403,7 +413,7 @@ export const events: Module<EventRow[]> = {
         keep: { type: 'boolean', describe: 'peek without clearing the drained rows from the buffer' },
         limit: { type: 'number', describe: 'max rows returned (oldest first); default: everything buffered' }
     },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const appId = ctx.app.id
         const opts = ctx.args.options

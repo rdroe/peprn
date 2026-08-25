@@ -38,6 +38,10 @@ import {
 const strOpt = (v: unknown): string | undefined => (v === undefined ? undefined : String(v))
 const numOpt = (v: unknown): number | undefined => (v === undefined ? undefined : Number(v))
 
+/** `--waitfor` arrives as `true` when bare (the parser's valueless-flag rule) or a number when given a timeout. */
+const waitForOpt = (v: unknown): number | true | undefined =>
+    v === undefined ? undefined : v === true ? true : Number(v)
+
 /**
  * The completion every act verb offers at its target position (PLAN-dom.md
  * "### Completion hooks": "Act verbs at position 0: registry refs (elN) +
@@ -70,7 +74,15 @@ const TARGETING_OPTIONS: Record<string, OptionSpec> = {
     near: { type: 'string', describe: 'rank the implicit-find target nearer to this anchor text' },
     exact: { alias: 'x', type: 'boolean', describe: 'exact normalized match only for the implicit-find target (no fuzzy)' },
     nth: { alias: 'n', type: 'number', describe: 'pick the Nth ranked match for the implicit-find target (1-based)' },
-    quiet: { alias: 'q', type: 'boolean', describe: 'skip the onscreen pointer flash' }
+    quiet: { alias: 'q', type: 'boolean', describe: 'skip the onscreen pointer flash' },
+    // number rather than boolean so it can carry a timeout: the core parser
+    // never gives a boolean option a value, and a bare `--waitfor` still
+    // arrives as `true` via the valueless-flag rule.
+    waitfor: {
+        alias: 'w',
+        type: 'number',
+        describe: 'retry until the target appears instead of failing immediately; optional timeout in ms (default 5000)'
+    }
 }
 
 /** `TARGETING_OPTIONS`' `describe`s, pre-flattened for `help.options` — every act verb's help spreads this in alongside its own verb-specific option docs. */
@@ -86,7 +98,8 @@ function buildResolveOpts(opts: Record<string, unknown>, consumesRest = false): 
         exact: opts.exact === true,
         nth: numOpt(opts.nth),
         quiet: opts.quiet === true,
-        consumesRest
+        consumesRest,
+        waitFor: waitForOpt(opts.waitfor)
     }
 }
 
@@ -122,10 +135,10 @@ export const click: Module<ActRow[]> = {
         }
     },
     options: { ...TARGETING_OPTIONS },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const opts = ctx.args.options
-        const { ref, el } = resolveTarget(ctx, buildResolveOpts(opts))
+        const { ref, el } = await resolveTarget(ctx, buildResolveOpts(opts))
         performClick(ctx.app.id, el)
         return [{ ref, did: 'click' }]
     }
@@ -141,10 +154,10 @@ export const dblclick: Module<ActRow[]> = {
         }
     },
     options: { ...TARGETING_OPTIONS },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const opts = ctx.args.options
-        const { ref, el } = resolveTarget(ctx, buildResolveOpts(opts))
+        const { ref, el } = await resolveTarget(ctx, buildResolveOpts(opts))
         performDblClick(ctx.app.id, el)
         return [{ ref, did: 'dblclick' }]
     }
@@ -206,7 +219,7 @@ export const typeVerb: Module<ActRow[]> = {
             ref = adoptElement(ctx.app.id, el, quiet)
             text = partition.words[0]
         } else {
-            const resolved = resolveTarget(ctx, buildResolveOpts(opts, true))
+            const resolved = await resolveTarget(ctx, buildResolveOpts(opts, true))
             ref = resolved.ref
             el = resolved.el
             text = resolved.rest.join(' ')
@@ -236,10 +249,10 @@ export const clear: Module<ActRow[]> = {
         }
     },
     options: { ...TARGETING_OPTIONS },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const opts = ctx.args.options
-        const { ref, el } = resolveTarget(ctx, buildResolveOpts(opts))
+        const { ref, el } = await resolveTarget(ctx, buildResolveOpts(opts))
         const result = performClear(el)
         return [{ ref, did: 'clear', value: result.value, changed: result.changed }]
     }
@@ -268,10 +281,10 @@ export const select: Module<ActRow[]> = {
         index: { type: 'number', describe: 'pick the option at this 1-based index directly' },
         add: { type: 'boolean', describe: 'multi-select: append to the current selection instead of replacing it' }
     },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const opts = ctx.args.options
-        const { ref, el, rest } = resolveTarget(ctx, buildResolveOpts(opts, true))
+        const { ref, el, rest } = await resolveTarget(ctx, buildResolveOpts(opts, true))
         const query = rest.join(' ')
         const index = numOpt(opts.index)
 
@@ -297,10 +310,10 @@ function makeCheckVerb(desired: boolean, did: 'check' | 'uncheck'): Module<ActRo
             }
         },
         options: { ...TARGETING_OPTIONS },
-        fn: (ctx) => {
+        fn: async (ctx) => {
             beginVerb(ctx)
             const opts = ctx.args.options
-            const { ref, el } = resolveTarget(ctx, buildResolveOpts(opts))
+            const { ref, el } = await resolveTarget(ctx, buildResolveOpts(opts))
             const result = performCheck(ctx.app.id, el, desired)
             return [{ ref, did, changed: result.changed }]
         }
@@ -329,7 +342,7 @@ export const press: Module<ActRow[]> = {
         ...TARGETING_OPTIONS,
         repeat: { type: 'number', describe: 'repeat the keydown/keypress/keyup sequence this many times (default 1)' }
     },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const opts = ctx.args.options
         const targetOpt = opts.target ?? opts.t
@@ -350,7 +363,7 @@ export const press: Module<ActRow[]> = {
             ref = adoptElement(ctx.app.id, el, quiet)
             keySpecText = partition.words[0]
         } else {
-            const resolved = resolveTarget(ctx, buildResolveOpts(opts, true))
+            const resolved = await resolveTarget(ctx, buildResolveOpts(opts, true))
             ref = resolved.ref
             el = resolved.el
             keySpecText = resolved.rest[0] ?? ''
@@ -378,10 +391,10 @@ export const hover: Module<ActRow[]> = {
         }
     },
     options: { ...TARGETING_OPTIONS },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const opts = ctx.args.options
-        const { ref, el } = resolveTarget(ctx, buildResolveOpts(opts))
+        const { ref, el } = await resolveTarget(ctx, buildResolveOpts(opts))
         performHover(ctx.app.id, el)
         return [{ ref, did: 'hover' }]
     }
@@ -397,10 +410,10 @@ export const focus: Module<ActRow[]> = {
         }
     },
     options: { ...TARGETING_OPTIONS },
-    fn: (ctx) => {
+    fn: async (ctx) => {
         beginVerb(ctx)
         const opts = ctx.args.options
-        const { ref, el } = resolveTarget(ctx, buildResolveOpts(opts))
+        const { ref, el } = await resolveTarget(ctx, buildResolveOpts(opts))
         performFocus(el)
         return [{ ref, did: 'focus' }]
     }

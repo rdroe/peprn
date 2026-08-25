@@ -75,6 +75,13 @@
   </table>
 </form>
 
+<!-- Deferred render, for --waitfor: the result appears 900ms after the click,
+     so acting on it immediately fails and `--waitfor` is what makes it work. -->
+<div id="deferred">
+  <button id="deferred-go">Load results</button>
+  <div id="deferred-slot"></div>
+</div>
+
 <div id="demo-log"></div>
 
 <script>
@@ -96,6 +103,19 @@
 
   document.getElementById('demo-cancel').addEventListener('click', function () {
     append('cancel clicked')
+  })
+
+  // deferred render: nothing exists to act on until 900ms after the click
+  var slot = document.getElementById('deferred-slot')
+  document.getElementById('deferred-go').addEventListener('click', function () {
+    slot.textContent = ''
+    setTimeout(function () {
+      var btn = document.createElement('button')
+      btn.id = 'deferred-apply'
+      btn.textContent = 'Apply results'
+      btn.addEventListener('click', function () { append('results applied') })
+      slot.appendChild(btn)
+    }, 900)
   })
 
   // record every input/change observed anywhere in the demo form, for the

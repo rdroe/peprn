@@ -166,6 +166,8 @@ with:
 - `--label`, `--placeholder`, `--text`, `--testid`, `--value`, `--alt`, `--title` —
   narrow the query to one specific source instead of scoring it against all of them.
 - `--near <anchor text>` — rank matches closer onscreen to another element higher.
+- `-w/--waitfor [ms]` — retry until something matches instead of failing on the first
+  miss; the optional value is the timeout (default 5000).
 - `-n/--nth <N>` — take the Nth-ranked match instead of the top one.
 - `--all` — return up to 25 rows instead of the default 5; `--limit <N>` sets an exact cap.
 - `-x/--exact` — equality only, no fuzzy fallback.
@@ -212,6 +214,43 @@ can only add matches that previously scored zero — it can never displace a nam
 actually declared. And the element that *provided* the text is demoted, so `find coupon`
 lands on the input rather than the inert `<span>` that captions it. Because this is the
 one place `find` infers rather than reads, `via` always tells you which happened.
+
+#### Waiting for the page to catch up
+
+The most common way DOM automation fails is acting before a re-render lands. `-w/--waitfor`
+makes target resolution *retry* instead of failing on the first miss, and because every
+verb resolves its target through one shared path, it works the same on all of them:
+
+```
+click "Load results"
+click Apply --waitfor          # retries until the deferred button renders
+find confirmation -w 10000     # same, with an explicit 10s timeout
+type coupon SAVE20 -w          # wait for the field, then type into it
+```
+
+Bare `--waitfor` uses a 5s timeout; a value sets your own. On timeout you get the
+underlying failure rather than a bare "timed out" — `dom: no match for "ghost" — closest:
+… (gave up after 5000ms)` — so you can tell "never appeared" from "appeared but I asked
+for the wrong thing".
+
+This is polling, which is the right tool when nothing notifies you. It is *not* how you
+wait on a `fetch`: peprn's handles already do that — `loadUser as u` starts without
+blocking and `@u` awaits it.
+
+For a fixed pause, `peprn/async` provides `sleep`:
+
+```js
+import { asyncModules } from 'peprn/async'
+createBrowserApp({ id: 'cli', modules: { ...domModules, ...asyncModules } })
+```
+
+```
+sleep 500
+```
+
+It lives outside `peprn/dom` deliberately — a timer has nothing to do with a document, so
+it works in a node shell too. Reach for `--waitfor` first: a fixed `sleep` is either
+longer than it needs to be or too short to be reliable.
 
 ### Act verbs
 

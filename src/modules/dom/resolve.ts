@@ -1,9 +1,10 @@
 import type { Invocation } from '../../core/types.js'
 import type { MatchRow, RankSpec, Role, SubRow } from './types.js'
 import { rankCandidates } from './rank.js'
-import { extractCandidates } from './extract.js'
+import { extractCandidates, invalidateCandidates } from './extract.js'
 import { resolveRef } from './registry.js'
 import { getOrCreateOverlay } from './overlay.js'
+import { pollUntil, type PollOptions } from '../async/poll.js'
 
 // Shared target resolution (PLAN-dom.md "Target resolution
 // (positional-partition rule)"). Every find/act/listen verb (later phases)
@@ -91,7 +92,21 @@ export interface ResolveOptions {
      * joined into one query, matching how `find` treats its positionals.
      */
     consumesRest?: boolean
+    /**
+     * Retry target resolution until it succeeds instead of failing on the first
+     * miss — the `--waitfor` option. `true` uses the default timeout; a number
+     * is that timeout in ms.
+     *
+     * This is the whole reason `resolveTarget` is async: because every act verb
+     * resolves through here, putting the retry at this one point gives all of
+     * them `--waitfor` without any of them knowing about it.
+     */
+    waitFor?: number | true
 }
+
+/** `--waitfor` (bare) -> default timeout; `--waitfor 3000` -> 3000ms; absent -> no polling. */
+export const waitForOptions = (value: number | true | undefined): PollOptions | undefined =>
+    value === undefined ? undefined : value === true ? {} : { timeoutMs: value }
 
 export interface ResolvedTarget {
     ref: string
@@ -112,7 +127,7 @@ const guessMessage = (query: string, guesses: MatchRow[], role?: string): string
 }
 
 /** Rank `query` against the current page and return the winning ref, or throw the same friendly "no match" error `find` itself throws. */
-function implicitFind(appId: string, query: string, opts: ResolveOptions): string {
+function implicitFindOnce(appId: string, query: string, opts: ResolveOptions): string {
     const candidates = extractCandidates(appId)
     const spec: RankSpec = { query, role: opts.role, near: opts.near, exact: opts.exact, nth: opts.nth }
     const { matches, guesses } = rankCandidates(candidates, spec)
@@ -122,12 +137,37 @@ function implicitFind(appId: string, query: string, opts: ResolveOptions): strin
 }
 
 /**
+ * `implicitFindOnce`, retried until it succeeds when `--waitfor` is set.
+ *
+ * The extraction cache is dropped before each retry — without that the poll
+ * would re-read one 300ms-old snapshot several times and never observe the
+ * change it is waiting for. `pollUntil` treats a throw as "not yet", so the
+ * ordinary no-match error doubles as the retry signal, and the last one is
+ * what surfaces if the wait times out.
+ */
+async function implicitFind(appId: string, query: string, opts: ResolveOptions): Promise<string> {
+    const poll = waitForOptions(opts.waitFor)
+    if (!poll) return implicitFindOnce(appId, query, opts)
+
+    let first = true
+    return pollUntil(
+        () => {
+            if (first) first = false
+            else invalidateCandidates(appId)
+            return implicitFindOnce(appId, query, opts)
+        },
+        `"${query}"`,
+        poll
+    )
+}
+
+/**
  * Resolve one `-t/--target` option value to a registry ref: a spliced
  * `MatchRow` (or an array containing one — a single-value option slot takes
  * a resolved `@handle` array as-is, unspread), a bare ref string, or plain
  * query text run through an implicit find.
  */
-function resolveTargetOption(appId: string, value: unknown, opts: ResolveOptions): string {
+async function resolveTargetOption(appId: string, value: unknown, opts: ResolveOptions): Promise<string> {
     if (Array.isArray(value)) {
         const row = value.find(isMatchRow)
         if (row) return row.ref
@@ -152,7 +192,7 @@ function resolveTargetOption(appId: string, value: unknown, opts: ResolveOptions
  * naturally (the row arrives first, `'hello'` is what's left). On success,
  * the resolved element is flashed onscreen for ~1.2s unless `opts.quiet`.
  */
-export function resolveTarget(ctx: Invocation, opts: ResolveOptions = {}): ResolvedTarget {
+export async function resolveTarget(ctx: Invocation, opts: ResolveOptions = {}): Promise<ResolvedTarget> {
     const appId = ctx.app.id
     const targetOpt = ctx.args.options.target ?? ctx.args.options.t
     const partition = partitionPositional(ctx.args.positional)
@@ -161,7 +201,7 @@ export function resolveTarget(ctx: Invocation, opts: ResolveOptions = {}): Resol
     let rest: string[]
 
     if (targetOpt !== undefined) {
-        ref = resolveTargetOption(appId, targetOpt, opts)
+        ref = await resolveTargetOption(appId, targetOpt, opts)
         rest = partition.words
     } else if (partition.rows.length > 0) {
         ref = partition.rows[0].ref
@@ -172,10 +212,10 @@ export function resolveTarget(ctx: Invocation, opts: ResolveOptions = {}): Resol
     } else if (partition.words.length > 0) {
         if (opts.consumesRest) {
             const [first, ...trailing] = partition.words
-            ref = implicitFind(appId, first, opts)
+            ref = await implicitFind(appId, first, opts)
             rest = trailing
         } else {
-            ref = implicitFind(appId, partition.words.join(' '), opts)
+            ref = await implicitFind(appId, partition.words.join(' '), opts)
             rest = []
         }
     } else {
