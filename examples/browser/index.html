@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>peprn browser example</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; max-width: 640px; margin: 24px auto; padding: 0 16px; }
+  #demo { border: 1px solid #ccc; border-radius: 6px; padding: 16px; margin-bottom: 16px; }
+  #demo > * { display: block; margin-bottom: 10px; }
+  #demo label { display: inline-block; margin-right: 8px; }
+  #demo-log { border: 1px dashed #999; border-radius: 6px; padding: 8px; min-height: 24px; font: 12px/1.4 ui-monospace, monospace; }
+</style>
+</head>
+<body>
+
+<!--
+  peprn/dom demo block (PLAN-dom.md "### Example + chrome-devtools smoke").
+  Labels precede their controls, as in ordinary markup: a labelled control
+  outranks its own <label> element on score alone, so an implicit
+  `find email` / `type email ...` resolves to the input either way.
+-->
+<form id="demo">
+  <label for="demo-email">Email</label>
+  <input type="email" id="demo-email" name="email" autocomplete="off">
+
+  <label for="demo-password">Password</label>
+  <input type="password" id="demo-password" name="password" autocomplete="off">
+
+  <input type="search" id="demo-search" name="search" placeholder="Search" autocomplete="off">
+
+  <label for="country">Country</label>
+  <select id="country" name="country">
+    <option value="">Choose…</option>
+    <option value="ca">Canada</option>
+    <option value="de">Germany</option>
+    <option value="fr">France</option>
+    <option value="is">Iceland</option>
+    <option value="jp">Japan</option>
+  </select>
+
+  <button type="submit" id="demo-submit">Submit order</button>
+  <button type="button" id="demo-cancel">Cancel</button>
+
+  <label for="demo-subscribe">Subscribe</label>
+  <input type="checkbox" id="demo-subscribe" name="subscribe">
+
+  <a href="#" id="demo-link">Learn more</a>
+
+  <div data-testid="demo-note">Ships within 3 business days.</div>
+</form>
+
+<!--
+  Markup that labels its controls to a reader but not to the DOM: no `for`,
+  no wrapping <label>, no aria-*. These exercise the `proximate` source and
+  the explicit <dt>/<th> associations; rows found this way report `via`
+  as "proximate" (a guess) or "label" (an explicit pairing).
+-->
+<form id="sloppy">
+  <div class="field"><span>Coupon</span> <input id="sloppy-coupon" autocomplete="off"></div>
+  <div class="field">Referrer <input id="sloppy-referrer" autocomplete="off"></div>
+  <div class="field"><input type="checkbox" id="sloppy-gift"> <span>Gift wrap</span></div>
+
+  <dl>
+    <dt>Delivery note</dt>
+    <dd><input id="sloppy-note" autocomplete="off"></dd>
+  </dl>
+
+  <table>
+    <tr><th>Quantity</th><th>Discount</th></tr>
+    <tr>
+      <td><input id="sloppy-qty" autocomplete="off"></td>
+      <td><input id="sloppy-discount" autocomplete="off"></td>
+    </tr>
+  </table>
+</form>
+
+<!-- Deferred render, for --waitfor: the result appears 900ms after the click,
+     so acting on it immediately fails and `--waitfor` is what makes it work. -->
+<div id="deferred">
+  <button id="deferred-go">Load results</button>
+  <div id="deferred-slot"></div>
+</div>
+
+<div id="demo-log"></div>
+
+<script>
+(function () {
+  var form = document.getElementById('demo')
+  var log = document.getElementById('demo-log')
+  window.__seen = []
+
+  function append(line) {
+    var row = document.createElement('div')
+    row.textContent = line
+    log.appendChild(row)
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault()
+    append('submitted')
+  })
+
+  document.getElementById('demo-cancel').addEventListener('click', function () {
+    append('cancel clicked')
+  })
+
+  // deferred render: nothing exists to act on until 900ms after the click
+  var slot = document.getElementById('deferred-slot')
+  document.getElementById('deferred-go').addEventListener('click', function () {
+    slot.textContent = ''
+    setTimeout(function () {
+      var btn = document.createElement('button')
+      btn.id = 'deferred-apply'
+      btn.textContent = 'Apply results'
+      btn.addEventListener('click', function () { append('results applied') })
+      slot.appendChild(btn)
+    }, 900)
+  })
+
+  // record every input/change observed anywhere in the demo form, for the
+  // smoke script to inspect via window.__seen (native-setter fidelity check)
+  form.addEventListener('input', function (e) {
+    window.__seen.push({ type: 'input', id: e.target.id, value: e.target.value })
+  }, true)
+
+  form.addEventListener('change', function (e) {
+    var value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    window.__seen.push({ type: 'change', id: e.target.id, value: value })
+    append(e.target.id + ' changed to ' + value)
+  }, true)
+})()
+</script>
+
+<script type="module" src="./bundle.js"></script>
+</body>
+</html>
